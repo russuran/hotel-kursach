@@ -1,9 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Response, Depends, Header
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from database import SessionLocal, engine
 import models, schemas
-from typing import List
+from typing import List, Annotated
+
+import time
+from datetime import datetime, timedelta
+import jwt
 
 # Создание базы данных
 models.Base.metadata.create_all(bind=engine)
@@ -27,9 +31,71 @@ app.add_middleware(
 def get_db():
     db = SessionLocal()
     try:
-        yield db
+        yield db 
     finally:
         db.close()
+
+#---------------------login---------------------
+
+SECRET_KEY = "otel-eleon"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
+async def get_current_user(db: Session = Depends(get_db), authorization: str = Header(...)):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Не удалось проверить учетные данные",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    token = authorization.split(" ")[1] if " " in authorization else None
+
+    if token is None:
+        raise credentials_exception
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+        user = db.query(models.Employee).filter(models.Employee.WorkerID == int(user_id)).first()
+        return user 
+    except:
+        raise credentials_exception
+
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta if expires_delta else datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+
+@app.post("/login")
+async def login(data: schemas.LoginSchema, response: Response, db: Session = Depends(get_db)):
+    user = db.query(models.Employee).filter(models.Employee.Login == data.login).first()
+
+    if user is not None:
+        if user.Password == data.password:
+            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(data={"sub": str(user.WorkerID)}, expires_delta=access_token_expires)
+            
+            response.status_code = 200
+            return {"access_token": access_token, "token_type": "bearer", "role": user.Position}
+
+    response.status_code = 401
+    return {"error": "Неверный логин или пароль"}
+
+@app.get("/me")
+async def read_users_me(current_user: models.Employee = Depends(get_current_user)):
+    return current_user
+
+#---------------------login---------------------
+
+
+#---------------------crud----------------------
 
 # Маршруты для работы с клиентами
 @app.post("/clients/", response_model=schemas.Client)

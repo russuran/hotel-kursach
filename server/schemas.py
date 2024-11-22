@@ -2,6 +2,11 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
 
+
+class LoginSchema(BaseModel):
+    login: str
+    password: str
+
 # Схема для клиента
 class ClientBase(BaseModel):
     FullName: str
