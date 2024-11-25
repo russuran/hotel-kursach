@@ -136,7 +136,7 @@ const SettledClientsTable = () => {
                     name="ClientRate"
                     type="number"
                     value={filter.ClientRate}
-                    onChange={handleFilterChange}
+                                        onChange={handleFilterChange}
                 />
             </div>
             <Button variant="contained" color="primary" onClick={() => handleOpenDialog('create')}>
@@ -158,12 +158,14 @@ const SettledClientsTable = () => {
                             <TableCell>{settledClient.SettlingID}</TableCell>
                             <TableCell>{settledClient.ClientRate}</TableCell>
                             <TableCell>
-                                <Button variant="outlined" onClick={() => handleOpenDialog('edit', settledClient)}>
-                                    Редактировать
-                                </Button>
-                                <Button variant="outlined" color="secondary" onClick={() => handleDelete(settledClient.ClientID)}>
-                                    Удалить
-                                </Button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                    <Button variant="outlined" onClick={() => handleOpenDialog('edit', settledClient)}>
+                                        Редактировать
+                                    </Button>
+                                    <Button variant="outlined" color="secondary" onClick={() => handleDelete(settledClient.ClientID)}>
+                                        Удалить
+                                    </Button>
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

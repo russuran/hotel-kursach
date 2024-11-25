@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Any
 
 
 class LoginSchema(BaseModel):
@@ -43,7 +43,7 @@ class Room(RoomBase):
 
 # Схема для бронирования
 class BookingBase(BaseModel):
-    RoomID: int
+    RoomID: Any
     FullName: str
     Phone: str
     DateStart: datetime
@@ -60,7 +60,7 @@ class Booking(BookingBase):
 
 # Схема для заселения
 class SettlingBase(BaseModel):
-    RoomID: int
+    RoomID: Any
     ServiceName: str
     OutDate: datetime
 
@@ -118,7 +118,7 @@ class SettledClient(SettledClientBase):
 
 # Схема для Settling_service
 class SettlingServiceBase(BaseModel):
-    Name: str
+    name: str
     SettlingID: int
     Amount: Optional[int] = 1
 
@@ -145,3 +145,11 @@ class Employee(EmployeeBase):
 
     class Config:
         orm_mode = True
+
+
+class Maid(BaseModel):
+    WorkerID: int
+
+
+class MaidCreate(Maid):
+    pass

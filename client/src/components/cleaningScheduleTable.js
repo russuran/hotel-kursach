@@ -19,6 +19,10 @@ import {
     DialogContentText,
     DialogTitle,
     TextField,
+    Select,
+    MenuItem,
+    InputLabel,
+    FormControl,
 } from '@mui/material';
 
 const CleaningScheduleTable = () => {
@@ -30,9 +34,13 @@ const CleaningScheduleTable = () => {
     const [dialogMode, setDialogMode] = useState('create'); // 'create' or 'edit'
     const [currentSchedule, setCurrentSchedule] = useState({});
     const [filter, setFilter] = useState({ CleaningState: '', RoomID: '', MaidID: '' });
+    const [rooms, setRooms] = useState([]);
+    const [maids, setMaids] = useState([]);
 
     useEffect(() => {
         fetchCleaningSchedules();
+        fetchRooms();
+        fetchMaids();
     }, []);
 
     const fetchCleaningSchedules = async () => {
@@ -44,6 +52,26 @@ const CleaningScheduleTable = () => {
             setOpenSnackbar(true);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchRooms = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/list_of_rooms');
+            setRooms(response.data);
+        } catch (err) {
+            setError(err.message);
+            setOpenSnackbar(true);
+        }
+    };
+
+    const fetchMaids = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/list_of_maids');
+            setMaids(response.data);
+        } catch (err) {
+            setError(err.message);
+            setOpenSnackbar(true);
         }
     };
 
@@ -112,7 +140,7 @@ const CleaningScheduleTable = () => {
 
     return (
         <TableContainer component={Paper}>
-            <Typography variant="h6" component="div" style={{ padding: '16px' }}>
+                        <Typography variant="h6" component="div" style={{ padding: '16px' }}>
                 Расписание Уборок
             </Typography>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '20px' }}>
@@ -123,22 +151,36 @@ const CleaningScheduleTable = () => {
                     value={filter.CleaningState}
                     onChange={handleFilterChange}
                 />
-                <TextField
-                    label="ID Номера"
-                    variant="outlined"
-                    name="RoomID"
-                    type="number"
-                    value={filter.RoomID}
-                    onChange={handleFilterChange}
-                />
-                                <TextField
-                    label="ID Горничной"
-                    variant="outlined"
-                    name="MaidID"
-                    type="number"
-                    value={filter.MaidID}
-                    onChange={handleFilterChange}
-                />
+                <FormControl variant="outlined" fullWidth>
+                    <InputLabel>ID Номера</InputLabel>
+                    <Select
+                        name="RoomID"
+                        value={filter.RoomID}
+                        onChange={handleFilterChange}
+                        label="ID Номера"
+                    >
+                        {rooms.map((room) => (
+                            <MenuItem key={room.RoomID} value={room.RoomID}>
+                                {room.RoomName} (ID: {room.RoomID})
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <FormControl variant="outlined" fullWidth>
+                    <InputLabel>ID Горничной</InputLabel>
+                    <Select
+                        name="MaidID"
+                        value={filter.MaidID}
+                        onChange={handleFilterChange}
+                        label="ID Горничной"
+                    >
+                        {maids.map((maid) => (
+                            <MenuItem key={maid.MaidID} value={maid.MaidID}>
+                                {maid.MaidName} (ID: {maid.MaidID})
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             </div>
             <Button variant="contained" color="primary" onClick={() => handleOpenDialog('create')}>
                 Добавить Уборку
@@ -208,26 +250,35 @@ const CleaningScheduleTable = () => {
                         value={currentSchedule.DateTime ? new Date(currentSchedule.DateTime).toISOString().slice(0, 16) : ''}
                         onChange={handleChange}
                     />
-                    <TextField
-                        margin="dense"
-                        name="RoomID"
-                        label="ID Номера"
-                        type="number"
-                        fullWidth
-                        variant="outlined"
-                        value={currentSchedule.RoomID || ''}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="MaidID"
-                        label="ID Горничной"
-                        type="number"
-                        fullWidth
-                        variant="outlined"
-                        value={currentSchedule.MaidID || ''}
-                        onChange={handleChange}
-                    />
+                    <FormControl fullWidth variant="outlined" margin="dense">
+                        <InputLabel>ID Номера</InputLabel>
+                        <Select                             name="RoomID"
+                            value={currentSchedule.RoomID || ''}
+                            onChange={handleChange}
+                            label="ID Номера"
+                        >
+                            {rooms.map((room) => (
+                                <MenuItem key={room.RoomID} value={room.RoomID}>
+                                    {room.RoomName} (ID: {room.RoomID})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth variant="outlined" margin="dense">
+                        <InputLabel>ID Горничной</InputLabel>
+                        <Select
+                            name="MaidID"
+                            value={currentSchedule.MaidID || ''}
+                            onChange={handleChange}
+                            label="ID Горничной"
+                        >
+                            {maids.map((maid) => (
+                                <MenuItem key={maid.MaidID} value={maid.MaidID}>
+                                    {maid.MaidName} (ID: {maid.MaidID})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseDialog} color="primary">
@@ -243,4 +294,6 @@ const CleaningScheduleTable = () => {
 };
 
 export default CleaningScheduleTable;
+
+                           
 

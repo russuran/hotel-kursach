@@ -28,8 +28,8 @@ const SettlingServiceTable = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [openDialog, setOpenDialog] = useState(false);
     const [dialogMode, setDialogMode] = useState('create'); // 'create' or 'edit'
-    const [currentService, setCurrentService] = useState({});
-    const [filter, setFilter] = useState({ name: '', Description: '', Price: '' });
+    const [currentService, setCurrentService] = useState({ SettlingID: 0, Amount: 1 });
+    const [filter, setFilter] = useState({ name: '', SettlingID: '', Amount: '' });
 
     useEffect(() => {
         fetchServices();
@@ -37,7 +37,7 @@ const SettlingServiceTable = () => {
 
     const fetchServices = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/settling-services');
+            const response = await axios.get('http://localhost:5000/settling_services');
             setServices(response.data);
         } catch (err) {
             setError(err.message);
@@ -55,15 +55,15 @@ const SettlingServiceTable = () => {
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
-        setCurrentService({});
+        setCurrentService({ SettlingID: 0, Amount: 1 });
     };
 
     const handleSave = async () => {
         try {
             if (dialogMode === 'create') {
-                await axios.post('http://localhost:5000/settling-services', currentService);
+                await axios.post('http://localhost:5000/settling_services/', currentService);
             } else {
-                await axios.put(`http://localhost:5000/settling-services/${currentService.name}`, currentService);
+                await axios.put(`http://localhost:5000/settling_services/${currentService.SettlingID}`, currentService);
             }
             fetchServices();
             handleCloseDialog();
@@ -73,9 +73,9 @@ const SettlingServiceTable = () => {
         }
     };
 
-    const handleDelete = async (serviceName) => {
+    const handleDelete = async (settlingID) => {
         try {
-            await axios.delete(`http://localhost:5000/settling-services/${serviceName}`);
+            await axios.delete(`http://localhost:5000/settling_services/${settlingID}`);
             fetchServices();
         } catch (err) {
             setError(err.message);
@@ -105,8 +105,8 @@ const SettlingServiceTable = () => {
     const filteredServices = services.filter(service => {
         return (
             service.name.toLowerCase().includes(filter.name.toLowerCase()) &&
-            service.Description.toLowerCase().includes(filter.Description.toLowerCase()) &&
-            (filter.Price ? service.Price.toString() === filter.Price : true)
+            (filter.SettlingID ? service.SettlingID.toString() === filter.SettlingID : true) &&
+            (filter.Amount ? service.Amount.toString() === filter.Amount : true)
         );
     });
 
@@ -124,19 +124,20 @@ const SettlingServiceTable = () => {
                     onChange={handleFilterChange}
                 />
                 <TextField
-                    label="Описание"
+                    label="SettlingID"
                     variant="outlined"
-                    name="Description"
-                    value={filter.Description}
+                    name="SettlingID"
+                    type="number"
+                    value={filter.SettlingID}
                     onChange={handleFilterChange}
                 />
                 <TextField
-                    label="Цена"
+                    label="Количество"
                     variant="outlined"
-                    name="Price"
+                    name="Amount"
                     type="number"
-                    value={filter.Price}
-                    onChange={handleFilterChange}
+                    value={filter.Amount}
+                                        onChange={handleFilterChange}
                 />
             </div>
             <Button variant="contained" color="primary" onClick={() => handleOpenDialog('create')}>
@@ -146,22 +147,22 @@ const SettlingServiceTable = () => {
                 <TableHead>
                     <TableRow>
                         <TableCell>Услуга</TableCell>
-                        <TableCell>Описание</TableCell>
-                        <TableCell>Цена</TableCell>
+                        <TableCell>SettlingID</TableCell>
+                        <TableCell>Количество</TableCell>
                         <TableCell>Действия</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {filteredServices.map((service) => (
-                        <TableRow key={service.name}>
+                        <TableRow key={service.SettlingID}>
                             <TableCell>{service.name}</TableCell>
-                            <TableCell>{service.Description}</TableCell>
-                            <TableCell>{service.Price}</TableCell>
+                            <TableCell>{service.SettlingID}</TableCell>
+                            <TableCell>{service.Amount}</TableCell>
                             <TableCell>
                                 <Button variant="outlined" onClick={() => handleOpenDialog('edit', service)}>
                                     Редактировать
                                 </Button>
-                                <Button variant="outlined" color="secondary" onClick={() => handleDelete(service.name)}>
+                                <Button variant="outlined" color="secondary" onClick={() => handleDelete(service.SettlingID)}>
                                     Удалить
                                 </Button>
                             </TableCell>
@@ -195,22 +196,22 @@ const SettlingServiceTable = () => {
                     />
                     <TextField
                         margin="dense"
-                        name="Description"
-                        label="Описание"
-                        type="text"
+                        name="SettlingID"
+                        label="SettlingID"
+                        type="number"
                         fullWidth
                         variant="outlined"
-                        value={currentService.Description || ''}
+                        value={currentService.SettlingID || ''}
                         onChange={handleChange}
                     />
                     <TextField
                         margin="dense"
-                        name="Price"
-                        label="Цена"
+                        name="Amount"
+                        label="Количество"
                         type="number"
                         fullWidth
                         variant="outlined"
-                        value={currentService.Price || ''}
+                        value={currentService.Amount || ''}
                         onChange={handleChange}
                     />
                 </DialogContent>

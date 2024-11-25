@@ -6,21 +6,22 @@ import { Link } from 'react-router-dom';
 const Navbar = () => {
   const role = localStorage.getItem('role');
 
-  // const urls = {
-  //   '/booking': 'Бонирование',
-  //   '/rooms': 'Номера',
-  //   '/services': 'Услуги',
-  //   '/settling': 'Заселение',
-  //   '/employees': 'Сотрудники',
-  //   '/maids': 'Горничные',
-  //   '/settledClients': 'Заселение Клиента',
-  //   '/settlingService': 'Услуги Заселения',
-  //   '/cleaningSchedule': 'Расписание Уборок',
-  //   '/clients': 'Клиенты',
-  // };
 
-  const urls = {};
+  let urls = {};
   
+  if (role === 'supervisor'){
+    urls = {
+      '/booking': 'Бонирование',
+      '/rooms': 'Номера',
+      '/services': 'Услуги',
+      '/settling': 'Заселение',
+      '/employees': 'Сотрудники',
+      '/settledClients': 'Заселение Клиента',
+      '/settlingServices': 'Услуги Заселения',
+      '/cleaningSchedule': 'Расписание Уборок',
+      '/clients': 'Клиенты',
+    };
+  }
   if (role === 'admin') {
     urls['/rooms'] = 'Номера';
     urls['/booking'] = 'Бронирование';

@@ -19,25 +19,30 @@ import {
     DialogContentText,
     DialogTitle,
     TextField,
+    Select,
+    MenuItem,
+    InputLabel,
+    FormControl,
 } from '@mui/material';
 
 const BookingTable = () => {
-    // Начальные значения для фильтров
     const valid = { FullName: '', Phone: '', DateStart: '', DateEnd: '', RoomID: '' };
     const [bookings, setBookings] = useState([]);
+    const [rooms, setRooms] = useState([]);
+    const [roomNames, setRoomNames] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [openDialog, setOpenDialog] = useState(false);
-    const [dialogMode, setDialogMode] = useState('create'); // 'create' или 'edit'
+    const [dialogMode, setDialogMode] = useState('create');
     const [currentBooking, setCurrentBooking] = useState({});
     const [filter, setFilter] = useState(valid);
 
     useEffect(() => {
         fetchBookings();
+        fetchRooms();
     }, []);
 
-    // Функция для получения списка бронирований
     const fetchBookings = async () => {
         try {
             const response = await axios.get('http://localhost:5000/bookings');
@@ -50,20 +55,34 @@ const BookingTable = () => {
         }
     };
 
-    // Открытие диалогового окна для создания или редактирования бронирования
+    const fetchRooms = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/list_of_rooms');
+            setRooms(response.data);
+            
+            // Создаем объект с названиями комнат
+            const names = {};
+            response.data.forEach(room => {
+                names[room.RoomID] = room.RoomName;
+            });
+            setRoomNames(names);
+        } catch (err) {
+            setError(err.message);
+            setOpenSnackbar(true);
+        }
+    };
+
     const handleOpenDialog = (mode, booking = {}) => {
         setDialogMode(mode);
         setCurrentBooking(booking);
         setOpenDialog(true);
     };
 
-    // Закрытие диалогового окна
     const handleCloseDialog = () => {
         setOpenDialog(false);
         setCurrentBooking({});
     };
 
-    // Сохранение нового или отредактированного бронирования
     const handleSave = async () => {
         try {
             if (dialogMode === 'create') {
@@ -79,7 +98,6 @@ const BookingTable = () => {
         }
     };
 
-    // Удаление бронирования
     const handleDelete = async (bookingId) => {
         try {
             await axios.delete(`http://localhost:5000/bookings/${bookingId}`);
@@ -90,36 +108,31 @@ const BookingTable = () => {
         }
     };
 
-    // Закрытие уведомления об ошибке
     const handleCloseSnackbar = () => {
         setOpenSnackbar(false);
     };
 
-    // Обработка изменений в полях ввода
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCurrentBooking((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Обработка изменений в фильтрах
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         setFilter((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Если данные загружаются, показываем индикатор загрузки
     if (loading) {
         return <CircularProgress />;
     }
 
-    // Фильтрация бронирований по введенным критериям
     const filteredBookings = bookings.filter(booking => {
         return (
             (booking.FullName && booking.FullName.toLowerCase().includes(filter.FullName.toLowerCase())) &&
             (booking.Phone && booking.Phone.toString().toLowerCase().includes(filter.Phone.toLowerCase())) &&
-            (filter.DateStart ? new Date(booking.DateStart) >= new Date(filter.DateStart) : true) &&
-            (filter.DateEnd ? new Date(booking.DateEnd) <= new Date(filter.DateEnd) : true) &&
-            (filter.RoomID ? booking.RoomID.toString() === filter.RoomID : true)
+            (filter.DateStart ? new Date(booking.DateStart) === new Date(filter.DateStart) : true) &&
+            (filter.DateEnd ? new Date(booking.DateEnd) === new Date(filter.DateEnd) : true) &&
+            (filter.RoomID ? booking.RoomID.toString() === filter.RoomID.toString() : true)
         );
     });
 
@@ -173,15 +186,21 @@ const BookingTable = () => {
                         shrink: true,
                     }}
                 />
-                <TextField
-                    label="Комната"
-                    variant="outlined"
-                    fullWidth
-                    name="RoomID"
-                    value={filter.RoomID}
-                    onChange={handleFilterChange}
-                    style={{ marginBottom: '16px' }}
-                />
+                <FormControl variant="outlined" fullWidth style={{ marginBottom: '16px' }}>
+                    <InputLabel>Комната</InputLabel>
+                    <Select
+                        name="RoomID"
+                        value={filter.RoomID}
+                        onChange={handleFilterChange}
+                        label="Комната"
+                    >
+                        {rooms.map((room) => (
+                            <MenuItem key={room.RoomID} value={room.RoomID}>
+                                {room.RoomName}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             </div>
             
             <Button variant="contained" color="primary" onClick={() => handleOpenDialog('create')}>
@@ -207,7 +226,7 @@ const BookingTable = () => {
                             <TableCell>{booking.Phone}</TableCell>
                             <TableCell>{new Date(booking.DateStart).toLocaleString()}</TableCell>
                             <TableCell>{new Date(booking.DateEnd).toLocaleString()}</TableCell>
-                            <TableCell>{booking.RoomID}</TableCell>
+                            <TableCell>{roomNames[booking.RoomID] || 'Несуществующая комната'}</TableCell>
                             <TableCell>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                                     <Button variant="outlined" onClick={() => handleOpenDialog('edit', booking)}>
@@ -246,7 +265,7 @@ const BookingTable = () => {
                         value={currentBooking.FullName || ''}
                         onChange={handleChange}
                     />
-                    <TextField
+                                        <TextField
                         margin="dense"
                         name="Phone"
                         label="Телефон"
@@ -276,16 +295,21 @@ const BookingTable = () => {
                         value={currentBooking.DateEnd ? new Date(currentBooking.DateEnd).toISOString().slice(0, 16) : ''}
                         onChange={handleChange}
                     />
-                    <TextField
-                        margin="dense"
-                        name="RoomID"
-                        label="ID Номера"
-                        type="number"
-                        fullWidth
-                        variant="outlined"
-                        value={currentBooking.RoomID || ''}
-                        onChange={handleChange}
-                    />
+                    <FormControl fullWidth variant="outlined" margin="dense">
+                        <InputLabel>Комната</InputLabel>
+                        <Select
+                            name="RoomID"
+                            value={currentBooking.RoomID || ''}
+                            onChange={handleChange}
+                            label="Комната"
+                        >
+                            {rooms.map((room) => (
+                                <MenuItem key={room.RoomID} value={room.RoomID}>
+                                    {room.RoomName} (ID: {room.RoomID})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseDialog} color="primary">

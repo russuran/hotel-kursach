@@ -19,7 +19,12 @@ import {
     DialogContentText,
     DialogTitle,
     TextField,
+    Select,
+    MenuItem,
+    InputLabel,
+    FormControl,
 } from '@mui/material';
+import MaskedInput from 'react-text-mask';
 
 const ClientsTable = () => {
     const [clients, setClients] = useState([]);
@@ -29,7 +34,7 @@ const ClientsTable = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [dialogMode, setDialogMode] = useState('create'); // 'create' or 'edit'
     const [currentClient, setCurrentClient] = useState({});
-    const [filter, setFilter] = useState({ FullName: '', Phone: '', Sex: '' });
+    const [filter, setFilter] = useState({ FullName: '', Phone: '', Sex: '', Passport: '' });
 
     useEffect(() => {
         fetchClients();
@@ -130,13 +135,22 @@ const ClientsTable = () => {
                     value={filter.Phone}
                     onChange={handleFilterChange}
                 />
-                <TextField
-                    label="Пол"
-                    variant="outlined"
-                    name="Sex"
-                    value={filter.Sex}
-                    onChange={handleFilterChange}
-                />
+                <FormControl variant="outlined">
+                    <InputLabel>Пол</InputLabel>
+                    <Select
+                        name="Sex"
+                        value={filter.Sex}
+                        style={{ width: '200px' }}
+                        onChange={handleFilterChange}
+                        label="Пол"
+                    >
+                        <MenuItem value="">
+                            <em>Все</em>
+                        </MenuItem>
+                        <MenuItem value="мужской">Мужской</MenuItem>
+                        <MenuItem value="женский">Женский</MenuItem>
+                    </Select>
+                </FormControl>
             </div>
             <Button variant="contained" color="primary" onClick={() => handleOpenDialog('create')}>
                 Добавить Клиента
@@ -208,35 +222,49 @@ const ClientsTable = () => {
                         value={currentClient.Birthday ? new Date(currentClient.Birthday).toISOString().slice(0, 10) : ''}
                         onChange={handleChange}
                     />
-                    <TextField
-                        margin="dense"
-                        name="Sex"
-                        label="Пол"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={currentClient.Sex || ''}
-                        onChange={handleChange}
-                    />
+                    <FormControl fullWidth variant="outlined" margin="dense">
+                        <InputLabel>Пол</InputLabel>
+                        <Select
+                            name="Sex"
+                            value={currentClient.Sex || ''}
+                            onChange={handleChange}
+                            label="Пол"
+                        >
+                            <MenuItem value="мужской">Мужской</MenuItem>
+                            <MenuItem value="женский">Женский</MenuItem>
+                        </Select>
+                    </FormControl>
                     <TextField
                         margin="dense"
                         name="Passport"
                         label="Паспорт"
-                        type="text"
+                        type={MaskedInput}
                         fullWidth
                         variant="outlined"
                         value={currentClient.Passport || ''}
                         onChange={handleChange}
+                        inputComponent={MaskedInput}
+                        inputProps={{
+                            mask: [/\d/, /\d/, /\d/, /\d/, ' ', /\d/, /\d/, /\d/, /\d/, /\d/, /\d/, /\d/],
+                        }}
                     />
                     <TextField
                         margin="dense"
                         name="Phone"
                         label="Телефон"
-                        type="text"
+                        type={MaskedInput}
                         fullWidth
                         variant="outlined"
                         value={currentClient.Phone || ''}
                         onChange={handleChange}
+                        inputComponent={MaskedInput}
+                        inputProps={{
+                            inputComponent: MaskedInput,
+                            inputProps: {
+                                mask: ['+', '7', ' ', '(', /\d/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, '-', /\d/, /\d/],
+                            }
+                            
+                        }}
                     />
                 </DialogContent>
                 <DialogActions>
@@ -253,4 +281,5 @@ const ClientsTable = () => {
 };
 
 export default ClientsTable;
+
 
