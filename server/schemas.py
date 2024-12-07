@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import date
 from typing import List, Optional, Any
 
 
@@ -9,11 +9,11 @@ class LoginSchema(BaseModel):
 
 # Схема для клиента
 class ClientBase(BaseModel):
-    FullName: str
-    Birthday: datetime
-    Sex: Optional[str] = None
-    Passport: Optional[int] = None
-    Phone: Optional[int] = None
+    FullName: Any
+    Birthday: Any
+    Sex: Optional[Any] = None
+    Passport: Optional[Any] = None
+    Phone: Optional[Any] = None
 
 class ClientCreate(ClientBase):
     pass
@@ -26,11 +26,11 @@ class Client(ClientBase):
 
 # Схема для комнаты
 class RoomBase(BaseModel):
-    Type: str
-    Size: Optional[int] = None
-    Price: Optional[float] = None
-    State: Optional[str] = 'Свободен'
-    Floor: Optional[int] = 1
+    Type: Any
+    Size: Optional[Any] = None
+    Price: Optional[Any] = None
+    State: Optional[Any] = 'Свободен'
+    Floor: Optional[Any] = 1
 
 class RoomCreate(RoomBase):
     pass
@@ -44,10 +44,10 @@ class Room(RoomBase):
 # Схема для бронирования
 class BookingBase(BaseModel):
     RoomID: Any
-    FullName: str
-    Phone: str
-    DateStart: datetime
-    DateEnd: datetime
+    FullName: Any
+    Phone: Any
+    DateStart: Any
+    DateEnd: Any
 
 class BookingCreate(BookingBase):
     pass
@@ -61,24 +61,24 @@ class Booking(BookingBase):
 # Схема для заселения
 class SettlingBase(BaseModel):
     RoomID: Any
-    ServiceName: str
-    OutDate: datetime
+    SettlingDate: Any
+    OutDate: Any
 
 class SettlingCreate(SettlingBase):
     pass
 
 class Settling(SettlingBase):
-    BookingNumber: int
-    SettlingDate: Optional[datetime] = None
+    BookingNumber: Any
+    SettlingDate: Optional[Any] = None
 
     class Config:
         orm_mode = True
 
 # Схема для услуги
 class ServiceBase(BaseModel):
-    name: str
-    Description: Optional[str] = None
-    Price: Optional[float] = None
+    name: Any
+    Description: Optional[Any] = None
+    Price: Optional[Any] = None
 
 class ServiceCreate(ServiceBase):
     pass
@@ -89,25 +89,25 @@ class Service(ServiceBase):
 
 # Схема для графика уборки
 class CleaningScheduleBase(BaseModel):
-    CleaningState: Optional[str] = 'Не убрано'
-    DateTime: datetime
-    RoomID: int
-    MaidID: int
+    CleaningState: Optional[Any] = 'Не убрано'
+    DateTime: Any
+    RoomID: Any
+    MaidID: Any
 
 class CleaningScheduleCreate(CleaningScheduleBase):
     pass
 
 class CleaningSchedule(CleaningScheduleBase):
-    CleaningID: int
+    CleaningID: Any
 
     class Config:
         orm_mode = True
 
 # Схема для settled_client
 class SettledClientBase(BaseModel):
-    ClientID: int
-    SettlingID: int
-    ClientRate: Optional[int] = None
+    ClientID: Any
+    SettlingID: Any
+    ClientRate: Optional[Any] = None
 
 class SettledClientCreate(SettledClientBase):
     pass
@@ -118,9 +118,9 @@ class SettledClient(SettledClientBase):
 
 # Схема для Settling_service
 class SettlingServiceBase(BaseModel):
-    name: str
-    SettlingID: int
-    Amount: Optional[int] = 1
+    Name: Any
+    SettlingID: Any
+    Amount: Optional[Any] = 1
 
 class SettlingServiceCreate(SettlingServiceBase):
     pass
@@ -131,11 +131,11 @@ class SettlingService(SettlingServiceBase):
 
 # Схема для работника (Employee)
 class EmployeeBase(BaseModel):
-    FullName: str
-    Position: str
-    Birthday: datetime
-    Login: Optional[str] = None
-    Password: Optional[str] = None
+    FullName: Any
+    Position: Any
+    Birthday: Any
+    Login: Optional[Any] = None
+    Password: Optional[Any] = None
 
 class EmployeeCreate(EmployeeBase):
     pass
@@ -148,7 +148,7 @@ class Employee(EmployeeBase):
 
 
 class Maid(BaseModel):
-    WorkerID: int
+    WorkerID: Any
 
 
 class MaidCreate(Maid):

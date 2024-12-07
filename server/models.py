@@ -11,7 +11,7 @@ class Client(Base):
     Birthday = Column(Date, nullable=False)
     Sex = Column(String(10))
     Passport = Column(Integer, unique=True)
-    Phone = Column(Integer, unique=True)
+    Phone = Column(String, unique=True)
 
     settled_clients = relationship("SettledClient", back_populates="client")
 
@@ -69,7 +69,6 @@ class Settling(Base):
     BookingNumber = Column(Integer, primary_key=True, index=True)
     SettlingDate = Column(Date)
     OutDate = Column(Date, nullable=False)
-    ServiceName = Column(String, nullable=False)
     RoomID = Column(Integer, ForeignKey('Room.RoomID'), nullable=False)
 
     room = relationship("Room", back_populates="settlings")

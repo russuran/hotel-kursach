@@ -9,17 +9,36 @@ import time
 from datetime import datetime, timedelta
 import jwt
 
-# Создание базы данных
+from crud.employee import router as employee_router
+from crud.maid import router as maids_router
+from crud.settling import router as settling_router
+from crud.settling_service import router as set_ser_router
+from crud.settled_clients import router as settled_clients_router
+from crud.service import router as service_router
+from crud.room import router as room_router
+from crud.booking import router as booking_router
+from crud.cleaning_schedule import router as cleaning_schedule_router
+from crud.client import router as client_router
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+app.include_router(employee_router, prefix="/employees", tags=["employees"])
+app.include_router(maids_router, prefix="/maids", tags=["maids"])
+app.include_router(settling_router, prefix="/settling", tags=["settlings"])
+app.include_router(set_ser_router, prefix="/settling-services", tags=["settling_services"])
+app.include_router(settled_clients_router, prefix="/settled-clients", tags=["settled_clients"])
+app.include_router(service_router, prefix="/services", tags=["services"])
+app.include_router(room_router, prefix="/rooms", tags=["rooms"])
+app.include_router(booking_router, prefix="/bookings", tags=["bookings"])
+app.include_router(cleaning_schedule_router, prefix="/cleaning-schedules", tags=["cleaning_schedule"])
+app.include_router(client_router, prefix="/clients", tags=["clients"])
+
 origins = [
-    "http://localhost:3000",
     "*"
 ]
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins, 
@@ -28,7 +47,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Зависимость для получения сессии базы данных
 def get_db():
     db = SessionLocal()
     try:
@@ -77,7 +95,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 @app.post("/login")
 async def login(data: schemas.LoginSchema, response: Response, db: Session = Depends(get_db)):
     user = db.query(models.Employee).filter(models.Employee.Login == data.login).first()
-
+    print(user)
     if user is not None:
         if user.Password == data.password:
             access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -93,488 +111,50 @@ async def login(data: schemas.LoginSchema, response: Response, db: Session = Dep
 async def read_users_me(current_user: models.Employee = Depends(get_current_user)):
     return current_user
 
-#---------------------login---------------------
-
-
-#---------------------crud----------------------
-
-
-@app.get('/employees')
-def get_employees(db: Session = Depends(get_db)):
-    employees = db.query(models.Employee).all()
-    return employees
-
-
-@app.post("/employees/", response_model=schemas.Employee)
-def create_employee(employee: schemas.EmployeeCreate, db: Session = Depends(get_db)):
-    db_employee = models.Employee(**employee.dict())
-    db.add(db_employee)
-    db.commit()
-    db.refresh(db_employee)
-
-    return db_employee
-
-@app.put("/employees/{employee_id}", response_model=schemas.Employee)
-def update_employee(employee_id: int, employee: schemas.EmployeeCreate, db: Session = Depends(get_db)):
-    db_employee = db.query(models.Employee).filter(models.Employee.WorkerID == employee_id).first()
-    if db_employee is None:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    
-    for key, value in employee.dict().items():
-        setattr(db_employee, key, value)
-    
-    db.commit()
-    db.refresh(db_employee)
-    return db_employee
-
-
-@app.delete("/employees/{employee_id}") 
-def delete_employee(employee_id: int, db: Session = Depends(get_db)):
-    db_employee = db.query(models.Employee).filter(models.Employee.WorkerID == employee_id).first()
-    if db_employee is None:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    
-    db.delete(db_employee)
-    db.commit()
-
-    return db_employee
-
-
-@app.get("/maids/", response_model=List[schemas.Maid])
-def read_maids(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    maids = db.query(models.Maid).offset(skip).limit(limit).all()
-
-    return maids
-
-
-@app.post("/maids/", response_model=schemas.Maid)
-def create_maid(maid: schemas.MaidCreate, db: Session = Depends(get_db)):    
-    db_maid = models.Maid(**maid.dict())
-    db.add(db_maid)
-    db.commit()
-    db.refresh(db_maid)
-
-    return db_maid
-
-
-@app.put("/maids/{maid_id}", response_model=schemas.Maid)
-def update_maid(maid_id: int, maid: schemas.MaidCreate, db: Session = Depends(get_db)):
-    db_maid = db.query(models.Maid).filter(models.Maid.MaidID == maid_id).first()
-    if db_maid is None:
-        raise HTTPException(status_code=404, detail="Maid not found")
-    
-    for key, value in maid.dict().items():
-        setattr(db_maid, key, value)
-    
-    db.commit()
-    db.refresh(db_maid)
-
-    return db_maid
-
-
-@app.delete("/maids/{maid_id}") 
-def delete_maid(maid_id: int, db: Session = Depends(get_db)):
-    db_maid = db.query(models.Maid).filter(models.Maid.MaidID == maid_id).first()
-    if db_maid is None:
-        raise HTTPException(status_code=404, detail="Maid not found")
-    
-    db.delete(db_maid)
-    db.commit()
-
-    return db_maid
-
-    
-# Маршруты для работы с клиентами
-@app.post("/clients/", response_model=schemas.Client)
-def create_client(client: schemas.ClientCreate, db: Session = Depends(get_db)):
-    db_client = models.Client(**client.dict())
-    db.add(db_client)
-    db.commit()
-    db.refresh(db_client)
-    return db_client
-
-@app.get("/clients/", response_model=List[schemas.Client])
-def read_clients(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    clients = db.query(models.Client).offset(skip).limit(limit).all()
-    return clients
-
-@app.get("/clients/{client_id}", response_model=schemas.Client)
-def read_client(client_id: int, db: Session = Depends(get_db)):
-    client = db.query(models.Client).filter(models.Client.ClientID == client_id).first()
-    if client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
-    return client
-
-@app.put("/clients/{client_id}", response_model=schemas.Client)
-def update_client(client_id: int, client: schemas.ClientCreate, db: Session = Depends(get_db)):
-    db_client = db.query(models.Client).filter(models.Client.ClientID == client_id).first()
-    if db_client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
-    
-    for key, value in client.dict().items():
-        setattr(db_client, key, value)
-    
-    db.commit()
-    db.refresh(db_client)
-    return db_client
-
-@app.delete("/clients/{client_id}", response_model=schemas.Client)
-def delete_client(client_id: int, db: Session = Depends(get_db)):
-    db_client = db.query(models.Client).filter(models.Client.ClientID == client_id).first()
-    if db_client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
-    
-    db.delete(db_client)
-    db.commit()
-    return db_client
-
-# Аналогично для других сущностей (комнаты, бронирования, услуги и т.д.)
-
-# Маршруты для работы с комнатами
-@app.post("/rooms/", response_model=schemas.Room)
-def create_room(room: schemas.RoomCreate, db: Session = Depends(get_db)):
-    db_room = models.Room(**room.dict())
-    db.add(db_room)
-    db.commit()
-    db.refresh(db_room)
-    return db_room
-
-@app.get("/rooms/", response_model=List[schemas.Room])
-def read_rooms(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    rooms = db.query(models.Room).offset(skip).limit(limit).all()
-    return rooms
-
-@app.get("/rooms/{room_id}", response_model=schemas.Room)
-def read_room(room_id: int, db: Session = Depends(get_db)):
-    room = db.query(models.Room).filter(models.Room.RoomID == room_id).first()
-    if room is None:
-        raise HTTPException(status_code=404, detail="Room not found")
-    return room
-
-@app.put("/rooms/{room_id}", response_model=schemas.Room)
-def update_room(room_id: int, room: schemas.RoomCreate, db: Session = Depends(get_db)):
-    db_room = db.query(models.Room).filter(models.Room.RoomID == room_id).first()
-    if db_room is None:
-        raise HTTPException(status_code=404, detail="Room not found")
-    
-    for key, value in room.dict().items():
-        setattr(db_room, key, value)
-    
-    db.commit()
-    db.refresh(db_room)
-    return db_room
-
-@app.delete("/rooms/{room_id}", response_model=schemas.Room)
-def delete_room(room_id: int, db: Session = Depends(get_db)):
-    db_room = db.query(models.Room).filter(models.Room.RoomID == room_id).first()
-    if db_room is None:
-                raise HTTPException(status_code=404, detail="Room not found")
-    
-    db.delete(db_room)
-    db.commit()
-    return db_room
-
-# Маршруты для работы с бронированиями
-@app.post("/bookings/", response_model=schemas.Booking)
-def create_booking(booking: schemas.BookingCreate, db: Session = Depends(get_db)):
-    db_booking = models.Booking(**booking.dict())
-    db.add(db_booking)
-    db.commit()
-    db.refresh(db_booking)
-    return db_booking
-
-@app.get("/bookings/", response_model=List[schemas.Booking])
-def read_bookings(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    bookings = db.query(models.Booking).offset(skip).limit(limit).all()
-    return bookings
-
-@app.get("/bookings/{booking_id}", response_model=schemas.Booking)
-def read_booking(booking_id: int, db: Session = Depends(get_db)):
-    booking = db.query(models.Booking).filter(models.Booking.BookingID == booking_id).first()
-    if booking is None:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    return booking
-
-@app.put("/bookings/{booking_id}", response_model=schemas.Booking)
-def update_booking(booking_id: int, booking: schemas.BookingCreate, db: Session = Depends(get_db)):
-    db_booking = db.query(models.Booking).filter(models.Booking.BookingID == booking_id).first()
-    if db_booking is None:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    
-    for key, value in booking.dict().items():
-        setattr(db_booking, key, value)
-    
-    db.commit()
-    db.refresh(db_booking)
-    return db_booking
-
-@app.delete("/bookings/{booking_id}", response_model=schemas.Booking)
-def delete_booking(booking_id: int, db: Session = Depends(get_db)):
-    db_booking = db.query(models.Booking).filter(models.Booking.BookingID == booking_id).first()
-    if db_booking is None:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    
-    db.delete(db_booking)
-    db.commit()
-    return db_booking
-
-# Маршруты для работы с заселениями
-@app.post("/settlings/", response_model=schemas.Settling)
-def create_settling(settling: schemas.SettlingCreate, db: Session = Depends(get_db)):
-    room_data = settling.RoomID.split(' | ')
-    Type = room_data[0]
-    Size = room_data[1].replace('мкв', '')
-    Floor = room_data[2].replace('эт', '')
-    print(Type, Size, Floor)
-    room_id = db.query(models.Room).filter(models.Room.Type == Type, models.Room.Size == Size, models.Room.Floor == Floor).first().RoomID
-
-    data = settling.dict()
-    data['RoomID'] = room_id
-    db_settling = models.Settling(**data)
-    db.add(db_settling)
-    db.commit()
-    db.refresh(db_settling)
-    return db_settling
-
-@app.get("/settlings/", response_model=List[schemas.Settling])
-def read_settlings(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    settlings = db.query(models.Settling).offset(skip).limit(limit).all()
-    for settling in settlings:
-        room = db.query(models.Room).filter(models.Room.RoomID == settling.RoomID).first()
-        settling.RoomID = f"{room.Type} | {room.Size}мкв | {room.Floor}эт"
-        
-    return settlings
-
-@app.get("/settlings/{settling_id}", response_model=schemas.Settling)
-def read_settling(settling_id: int, db: Session = Depends(get_db)):
-    settling = db.query(models.Settling).filter(models.Settling.BookingNumber == settling_id).first()
-    if settling is None:
-        raise HTTPException(status_code=404, detail="Settling not found")
-    return settling
-
-@app.put("/settlings/{settling_id}", response_model=schemas.Settling)
-def update_settling(settling_id: int, settling: schemas.SettlingCreate, db: Session = Depends(get_db)):
-    db_settling = db.query(models.Settling).filter(models.Settling.BookingNumber == settling_id).first()
-    if db_settling is None:
-        raise HTTPException(status_code=404, detail="Settling not found")
-    
-    for key, value in settling.dict().items():
-        setattr(db_settling, key, value)
-    
-    db.commit()
-    db.refresh(db_settling)
-    return db_settling
-
-@app.delete("/settlings/{settling_id}", response_model=schemas.Settling)
-def delete_settling(settling_id: int, db: Session = Depends(get_db)):
-    db_settling = db.query(models.Settling).filter(models.Settling.BookingNumber == settling_id).first()
-    if db_settling is None:
-        raise HTTPException(status_code=404, detail="Settling not found")
-    
-    db.delete(db_settling)
-    db.commit()
-    return db_settling
-
-# Маршруты для работы с услугами
-@app.post("/services/", response_model=schemas.Service)
-def create_service(service: schemas.ServiceCreate, db: Session = Depends(get_db)):
-    db_service = models.Service(**service.dict())
-    db.add(db_service)
-    db.commit()
-    db.refresh(db_service)
-    return db_service
-
-@app.get("/services/", response_model=List[schemas.Service])
-def read_services(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    services = db.query(models.Service).offset(skip).limit(limit).all()
-    return services
-
-@app.get("/services/{service_name}", response_model=schemas.Service)
-def read_service(service_name: str, db: Session = Depends(get_db)):
-    service = db.query(models.Service).filter(models.Service.name == service_name).first()
-    if service is None:
-        raise HTTPException(status_code=404, detail="Service not found")
-    return service
-
-@app.put("/services/{service_id}", response_model=schemas.Service)
-def update_service(service_id: int, service: schemas.ServiceCreate, db: Session = Depends(get_db)):
-    db_service = db.query(models.Service).filter(models.Service.name == service_id).first()
-    if db_service is None:
-        raise HTTPException(status_code=404, detail="Service not found")
-    
-    for key, value in service.dict().items():
-        setattr(db_service, key, value)
-    
-    db.commit()
-    db.refresh(db_service)
-    return db_service
-
-@app.delete("/services/{service_id}", response_model=schemas.Service)
-def delete_service(service_id: Any, db: Session = Depends(get_db)):
-    db_service = db.query(models.Service).filter(models.Service.name == service_id).first()
-    if db_service is None:
-        raise HTTPException(status_code=404, detail="Service not found")
-    
-    db.delete(db_service)
-    db.commit()
-    return db_service
-
-# Маршруты для работы с графиками уборки
-@app.post("/cleaning-schedules/", response_model=schemas.CleaningSchedule)
-def create_cleaning_schedule(schedule: schemas.CleaningScheduleCreate, db: Session = Depends(get_db)):
-    db_schedule = models.CleaningSchedule(**schedule.dict())
-    db.add(db_schedule)
-    db.commit()
-    db.refresh(db_schedule)
-    return db_schedule
-
-@app.get("/cleaning-schedules/", response_model=List[schemas.CleaningSchedule])
-def read_cleaning_schedules(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    schedules = db.query(models.CleaningSchedule).offset(skip).limit(limit).all()
-    return schedules
-
-@app.get("/cleaning-schedules/{cleaning_id}", response_model=schemas.CleaningSchedule)
-def read_cleaning_schedule(cleaning_id: int, db: Session = Depends(get_db)):
-    schedule = db.query(models.CleaningSchedule).filter(models.CleaningSchedule.CleaningID == cleaning_id).first()
-    if schedule is None:
-        raise HTTPException(status_code=404, detail="Cleaning schedule not found")
-    return schedule
-
-@app.put("/cleaning-schedules/{cleaning_id}", response_model=schemas.CleaningSchedule)
-def update_cleaning_schedule(cleaning_id: int, schedule: schemas.CleaningScheduleCreate, db: Session = Depends(get_db)):
-    db_schedule = db.query(models.CleaningSchedule).filter(models.CleaningSchedule.CleaningID == cleaning_id).first()
-    if db_schedule is None:
-        raise HTTPException(status_code=404, detail="Cleaning schedule not found")
-    
-    for key, value in schedule.dict().items():
-        setattr(db_schedule, key, value)
-    
-    db.commit()
-    db.refresh(db_schedule)
-    return db_schedule
-
-@app.delete("/cleaning-schedules/{cleaning_id}", response_model=schemas.CleaningSchedule)
-def delete_cleaning_schedule(cleaning_id: int, db: Session = Depends(get_db)):
-    db_schedule = db.query(models.CleaningSchedule).filter(models.CleaningSchedule.CleaningID == cleaning_id).first()
-    if db_schedule is None:
-        raise HTTPException(status_code=404, detail="Cleaning schedule not found")
-    
-    db.delete(db_schedule)
-    db.commit()
-    return db_schedule
-
-# Маршруты для работы с settled_clients
-@app.post("/settled-clients/", response_model=schemas.SettledClient)
-def create_settled_client(settled_client: schemas.SettledClientCreate, db: Session = Depends(get_db)):
-    db_settled_client = models.SettledClient(**settled_client.dict())
-    db.add(db_settled_client)
-    db.commit()
-    db.refresh(db_settled_client)
-    return db_settled_client
-
-@app.get("/settled-clients/", response_model=List[schemas.SettledClient])
-def read_settled_clients(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    settled_clients = db.query(models.SettledClient).offset(skip).limit(limit).all()
-    return settled_clients
-
-@app.get("/settled-clients/{settled_client_id}", response_model=schemas.SettledClient)
-def read_settled_client(settled_client_id: int, db: Session = Depends(get_db)):
-    settled_client = db.query(models.SettledClient).filter(models.SettledClient.ClientID == settled_client_id).first()
-    if settled_client is None:
-        raise HTTPException(status_code=404, detail="Settled client not found")
-    return settled_client
-
-@app.put("/settled-clients/{settled_client_id}", response_model=schemas.SettledClient)
-def update_settled_client(settled_client_id: int, settled_client: schemas.SettledClientCreate, db: Session = Depends(get_db)):
-    db_settled_client = db.query(models.SettledClient).filter(models.SettledClient.ClientID == settled_client_id).first()
-    if db_settled_client is None:
-        raise HTTPException(status_code=404, detail="Settled client not found")
-    
-    for key, value in settled_client.dict().items():
-        setattr(db_settled_client, key, value)
-    
-    db.commit()
-    db.refresh(db_settled_client)
-    return db_settled_client
-
-@app.delete("/settled-clients/{settled_client_id}", response_model=schemas.SettledClient)
-def delete_settled_client(settled_client_id: int, db: Session = Depends(get_db)):
-    db_settled_client = db.query(models.SettledClient).filter(models.SettledClient.ClientID == settled_client_id).first()
-    if db_settled_client is None:
-        raise HTTPException(status_code=404, detail="Settled client not found")
-    
-    db.delete(db_settled_client)
-    db.commit()
-    return db_settled_client
-
-# Маршруты для работы с settling_services
-@app.post("/settling_services/", response_model=schemas.SettlingService)
-def create_settling_service(settling_service: schemas.SettlingServiceCreate, db: Session = Depends(get_db)):
-    db_settling_service = models.SettlingService(**settling_service.dict())
-    db.add(db_settling_service)
-    db.commit()
-    db.refresh(db_settling_service)
-    return db_settling_service
-
-@app.get("/settling_services/", response_model=List[schemas.SettlingService])
-def read_settling_services(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    settling_services = db.query(models.SettlingService).offset(skip).limit(limit).all()
-    return settling_services
-
-@app.get("/settling_services/{settling_service_id}", response_model=schemas.SettlingService)
-def read_settling_service(settling_service_id: int, db: Session = Depends(get_db)):
-    settling_service = db.query(models.SettlingService).filter(models.SettlingService.SettlingID == settling_service_id).first()
-    if settling_service is None:
-        raise HTTPException(status_code=404, detail="Settling service not found")
-    return settling_service
-
-@app.put("/settling_services/{settling_service_id}", response_model=schemas.SettlingService)
-def update_settling_service(settling_service_id: int, settling_service: schemas.SettlingServiceCreate, db: Session = Depends(get_db)):
-    db_settling_service = db.query(models.SettlingService).filter(models.SettlingService.SettlingID == settling_service_id).first()
-    if db_settling_service is None:
-        raise HTTPException(status_code=404, detail="Settling service not found")
-    
-    for key, value in settling_service.dict().items():
-        setattr(db_settling_service, key, value)
-    
-    db.commit()
-    db.refresh(db_settling_service)
-    return db_settling_service
-
-@app.delete("/settling_services/{settling_service_id}", response_model=schemas.SettlingService)
-def delete_settling_service(settling_service_id: int, db: Session = Depends(get_db)):
-    db_settling_service = db.query(models.SettlingService).filter(models.SettlingService.SettlingID == settling_service_id).first()
-    if db_settling_service is None:
-        raise HTTPException(status_code=404, detail="Settling service not found")
-    
-    db.delete(db_settling_service)
-    db.commit()
-    return db_settling_service
 
 
 @app.get("/list_of_rooms")
 def list_of_rooms(db: Session = Depends(get_db)):
     rooms = db.query(models.Room).all()
-    return [{"RoomID": room.RoomID, "RoomName": f'{room.Type} | {room.Size}мкв | {room.Floor}эт'} for room in rooms]
+    return [{"label": f'{room.Type} | {room.Size}мкв | {room.Floor}эт', "value": room.RoomID} for room in rooms]
 
+@app.get("/sc_list")
+def sc_list(db: Session = Depends(get_db)):
+    settlings = db.query(models.Settling).all()
+    ret_list = []
+    for settling in settlings:
+        ret = {}
+        room = db.query(models.Room).filter(models.Room.RoomID == settling.RoomID).first()
+        ret['label'] = f'{room.Type} | {room.Size}мкв | {room.Floor}эт + {settling.SettlingDate} - {settling.OutDate}'
+        ret['value'] = settling.BookingNumber
 
-@app.get("/list_of_maids")
-def list_of_maids(db: Session = Depends(get_db)):
-    maids = db.query(models.Employee).all()
-    return [{"MaidID": maid.MaidID, "MaidName": maid.MaidName} for maid in maids if maid.position == 'maid']
+        ret_list.append(ret)
 
+    return ret_list
 
-@app.get("/room_by_id/{room_id}")
-def room_by_id(room_id: int, db: Session = Depends(get_db)):
-    room = db.query(models.Room).filter(models.Room.RoomID == room_id).first()
-    return { 'RoomName': f'{room.Type} | {room.Size}мкв | {room.Floor}эт (ID: {room.RoomID})' }
-
+@app.get("/list_of_clients")
+def list_of_clients(db: Session = Depends(get_db)): 
+    clients = db.query(models.Client).all()
+    return [{"value": client.ClientID, "label": client.FullName} for client in clients]
 
 @app.get("/services_list")
 def service_list(db: Session = Depends(get_db)):
     services = db.query(models.Service).all()
 
-    return [{ "ServiceName": service.name } for service in services]
+    return [{"label": service.name, "value": service.name} for service in services]
+
+@app.get("/list_of_maids")
+def list_of_maid(db: Session = Depends(get_db)):
+    maids = db.query(models.Maid).all()
+    ret_list = []
+    for maid in maids:
+        ret = {}
+        name = db.query(models.Employee).filter(models.Employee.WorkerID == maid.WorkerID).first().FullName
+        ret['label'] = name
+        ret['value'] = maid.MaidID
+        ret_list.append(ret)
+
+    return ret_list
 
 if __name__ == "__main__":
     import uvicorn

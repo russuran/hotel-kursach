@@ -9,9 +9,9 @@ const Navbar = () => {
 
   let urls = {};
   
-  if (role === 'supervisor'){
+  if (role === 'Директор'){
     urls = {
-      '/booking': 'Бонирование',
+      '/booking': 'Бронирование',
       '/rooms': 'Номера',
       '/services': 'Услуги',
       '/settling': 'Заселение',
@@ -22,7 +22,7 @@ const Navbar = () => {
       '/clients': 'Клиенты',
     };
   }
-  if (role === 'admin') {
+  if (role === 'Администратор') {
     urls['/rooms'] = 'Номера';
     urls['/booking'] = 'Бронирование';
     urls['/clients'] = 'Клиенты';
@@ -31,18 +31,18 @@ const Navbar = () => {
     urls['/employees'] = 'Сотрудники';
   };
 
-  if (role === 'manager') {
+  if (role === 'Менеджер') {
     urls['/clients'] = 'Клиенты';
     urls['/rooms'] = 'Номера';
     urls['/settling'] = 'Заселение';
     urls['/settlingServices'] = 'Услуги Заселения';
   };
 
-  if (role === 'maid') {
+  if (role === 'Горничная') {
     urls['/cleaningSchedule'] = 'Услуги Заселения';
   }
 
-  if (role === 'control') {
+  if (role === 'Управляющий') {
     urls['/clients'] = 'Клиенты';
     urls['/rooms'] = 'Номера';
     urls['/cleaningSchedule'] = 'Расписание Уборок';

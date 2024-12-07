@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 
-const ProtectedRoute = ({ component: Component }) => {
+const ProtectedRoute = ({ component: Component, ...rest }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
 
     useEffect(() => {
@@ -32,7 +32,7 @@ const ProtectedRoute = ({ component: Component }) => {
         return <p>Загрузка</p>;
     }
 
-    return isAuthenticated ? <Component /> : <Navigate to="/login" />;
+    return isAuthenticated ? <Component {...rest} /> : <Navigate to="/login" />;
 };
 
 export default ProtectedRoute;
