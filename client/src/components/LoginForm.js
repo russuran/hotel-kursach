@@ -25,6 +25,10 @@ function Login() {
       if (response.status === 200) {
         localStorage.setItem('token', data.access_token); 
         localStorage.setItem('role', data.role);
+        const list = localStorage.getItem('user_list');
+        if (!list) {
+            localStorage.setItem('user_list', JSON.stringify([{ name: data.name, role: data.role, token: data.access_token }]));
+        }
         navigate('/');
       } else {
         setErrorMessage(data.error || 'Неверный логин или пароль');
@@ -38,14 +42,14 @@ function Login() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20vh', height: '100vh' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div style={{ width: 250, 
+      <div style={{ width: 350, 
                     display: 'flex', 
                     flexDirection: 'column', 
                     justifyItems: 'center', 
                     backgroundColor: '#F1F1F1', 
                     border: '1px solid #CCC', 
                     borderRadius: 10,
-                    height: '30vh',
+                    height: '40vh',
                     padding: 50 }}>
         <p
           style={{

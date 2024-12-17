@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 from typing import List, Any
 from database import SessionLocal, engine
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -70,6 +71,7 @@ def delete_service(service_id: Any, db: Session = Depends(get_db)):
     if db_service is None:
         raise HTTPException(status_code=404, detail="Service not found")
     
-    db.delete(db_service)
+    db.execute(text("CALL del_service(:service_id)", {"service_id": service_id}))
+    #db.delete(db_service)
     db.commit()
     return db_service

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 from typing import List
 from database import SessionLocal, engine
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -53,6 +54,8 @@ def delete_cleaning_schedule(cleaning_id: int, db: Session = Depends(get_db)):
     if db_schedule is None:
         raise HTTPException(status_code=404, detail="Cleaning schedule not found")
     
-    db.delete(db_schedule)
+    db.execute(text("CALL del_cleaning_schedule(:cleaning_id)", {"cleaning_id": cleaning_id}))
+
+    #db.delete(db_schedule)
     db.commit()
     return db_schedule

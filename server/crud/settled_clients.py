@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 from typing import List
 from database import SessionLocal, engine
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -63,4 +64,18 @@ def update_settled_client(ClientID: int, SettlingID: int, settled_client: schema
     
     db.commit()
     db.refresh(db_settled_client)
+    return db_settled_client
+
+
+@router.delete("/{ClientID}/{SettlingID}")
+def delete_settled_client(ClientID: int, SettlingID: int, db: Session = Depends(get_db)):
+    db_settled_client = db.query(models.SettledClient).filter(models.SettledClient.ClientID == ClientID, models.SettledClient.SettlingID == SettlingID).first()
+    if db_settled_client is None:
+        raise HTTPException(status_code=404, detail="Settled client not found")
+    
+    db.execute(text("CALL del_settled_client(:ClientID, :SettlingID)", {"ClientID": ClientID, "SettlingID": SettlingID}))
+
+    #db.delete(db_settled_client)
+    db.commit()
+    
     return db_settled_client

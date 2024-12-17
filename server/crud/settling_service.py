@@ -5,6 +5,7 @@ import models, schemas
 from typing import List
 from database import SessionLocal, engine
 from typing import Any
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -70,6 +71,8 @@ def delete_settling_service(settling_service_id: int, db: Session = Depends(get_
     if db_settling_service is None:
         raise HTTPException(status_code=404, detail="Settling service not found")
     
-    db.delete(db_settling_service)
+    db.execute(text("CALL del_settling_service(:settling_service_id)", {"settling_service_id": settling_service_id}))
+
+    #db.delete(db_settling_service)
     db.commit()
     return db_settling_service

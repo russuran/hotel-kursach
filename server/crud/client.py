@@ -5,6 +5,7 @@ import models, schemas
 from typing import List
 from database import SessionLocal, engine
 from datetime import datetime, timedelta
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -78,6 +79,8 @@ def delete_client(client_id: int, db: Session = Depends(get_db)):
     if db_client is None:
         raise HTTPException(status_code=404, detail="Client not found")
     
-    db.delete(db_client)
+    db.execute(text("CALL del_client(:client_id)", {"client_id": client_id}))
+
+    #db.delete(db_client)
     db.commit()
     return db_client

@@ -1,5 +1,3 @@
-import { mask } from "primereact/utils";
-
 const fetchRooms = () => {
     return fetch('http://127.0.0.1:5000/list_of_rooms')
         .then(response => response.json());
@@ -32,7 +30,7 @@ export const initializeConfigs = async () => {
         const settlingOptions = await fetchSettledClients();
         const servicesOptions = await fetchServices();
         const maidOptions = await fetchMaids();
-
+        console.log(settlingOptions);
         const bookingConfig = {
             apiEndpoint: 'http://127.0.0.1:5000/bookings/',
             columns: [
@@ -49,7 +47,11 @@ export const initializeConfigs = async () => {
                 DateStart: null,
                 DateEnd: null
             },
-
+            admin: { 'create': true, 'edit': true, 'delete': true },
+            control: { 'create': false, 'edit': false, 'delete': false },
+            manager: { 'can_view': false },
+            maid: { 'can_view': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'BookingID'
         };
 
@@ -59,7 +61,7 @@ export const initializeConfigs = async () => {
                 { field: 'RoomID', header: 'Комната', sortable: true, filter: true, dropdown: roomOptions },
                 { field: 'MaidID', header: 'Сотрудник', sortable: true, filter: true, dropdown: maidOptions },
                 { field: 'DateTime', header: 'Дата', sortable: true, filter: true, type: 'date' },
-                { field: 'CleaningState', header: 'Состояние', sortable: true, filter: true, dropdown: [{label: 'Не убрано', value: 'Не убрано'}, {label: 'Убрано', value: 'Убрано'}] },
+                { field: 'CleaningState', header: 'Состояние', sortable: true, filter: true, dropdown: [{label: 'Не убрано', value: 'Не убрано'}, {label: 'убрано', value: 'убрано'}] },
                 
             ],
             initialState: {
@@ -68,6 +70,11 @@ export const initializeConfigs = async () => {
                 DateTime: null,
                 CleaningState: null
             },
+            admin: { 'can_view': false },
+            control: { 'create': false, 'edit': false, 'delete': false },
+            manager: { 'create': true, 'edit': true, 'delete': true },
+            maid: { 'create': false, 'edit': true, 'delete': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'CleaningID'
         };
 
@@ -80,6 +87,11 @@ export const initializeConfigs = async () => {
             initialState: {
                 WorkerID: null
             },
+            admin: { 'can_view': false },
+            control: { 'create': true, 'edit': true, 'delete': true },
+            manager: { 'can_view': false },
+            maid: { 'can_view': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'WorkerID'
         };
 
@@ -88,10 +100,10 @@ export const initializeConfigs = async () => {
             columns: [
                 { field: 'FullName', header: 'ФИО', sortable: true, filter: true },
                 { field: 'Position', header: 'Должность', sortable: true, filter: true, dropdown: [{label: 'Директор', value: 'Директор'},
-                                                                                                   {label: 'Администратор', value: 'admin'}, 
-                                                                                                   {label: 'Горничная', value: 'maid'},
-                                                                                                   {label: 'Управляющий', value: 'control'}, 
-                                                                                                   {label: 'Менеджер', value: 'manager'}] },
+                                                                                                   {label: 'Администратор', value: 'Администратор'}, 
+                                                                                                   {label: 'Горничная', value: 'Горничная'},
+                                                                                                   {label: 'Управляющий', value: 'Управляющий'}, 
+                                                                                                   {label: 'Менеджер', value: 'Менеджер'}] },
                 { field: 'Birthday', header: 'Дата рождения', sortable: true, filter: true, type: 'date' },
                 { field: 'Login', header: 'Логин', sortable: true, filter: true },
                 { field: 'Password', header: 'Пароль', sortable: true, filter: true },
@@ -103,6 +115,11 @@ export const initializeConfigs = async () => {
                 Login: null,
                 Password: null
             },
+            admin: { 'can_view': false },
+            control: { 'create': true, 'edit': true, 'delete': true },
+            manager: { 'create': false, 'edit': false, 'delete': false },
+            maid: { 'can_view': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'WorkerID'
         };
 
@@ -123,6 +140,11 @@ export const initializeConfigs = async () => {
                 State: null,
                 Price: null
             },
+            admin: { 'create': true, 'edit': true, 'delete': true },
+            control: { 'create': false, 'edit': false, 'delete': false },
+            manager: { 'can_view': false },
+            maid: { 'can_view': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'RoomID'
         };
 
@@ -138,6 +160,11 @@ export const initializeConfigs = async () => {
                 Price: null,
                 Description: null
             },
+            admin: { 'can_view': false },
+            control: { 'create': false, 'edit': false, 'delete': false },
+            manager: { 'create': true, 'edit': true, 'delete': true },
+            maid: { 'can_view': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'name'
         };
 
@@ -154,6 +181,11 @@ export const initializeConfigs = async () => {
                 SettlingID: null,
                 ClientRate: null
             },
+            admin: { 'create': true, 'edit': true, 'delete': true },
+            control: { 'create': false, 'edit': false, 'delete': false },
+            manager: { 'create': false, 'edit': false, 'delete': false },
+            maid: { 'can_view': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'ClientID',
             edit_key1: 'SettlingID'
 
@@ -172,6 +204,11 @@ export const initializeConfigs = async () => {
                 SettlingID: null,
                 Amount: null
             },
+            admin: { 'can_view': false },
+            control: { 'create': false, 'edit': false, 'delete': false },
+            manager: { 'create': true, 'edit': true, 'delete': true },
+            maid: { 'can_view': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'Name',
             edit_key1: 'SettlingID'
         };
@@ -189,6 +226,11 @@ export const initializeConfigs = async () => {
                 SettlingDate: null,
                 OutDate: null
             },
+            admin: { 'create': true, 'edit': true, 'delete': true },
+            control: { 'create': false, 'edit': false, 'delete': false },
+            manager: { 'can_view': false },
+            maid: { 'can_view': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'BookingNumber'
         };
 
@@ -208,6 +250,11 @@ export const initializeConfigs = async () => {
                 Passport: null,
                 Phone: null
             },
+            admin: { 'create': true, 'edit': true, 'delete': true },
+            control: { 'create': false, 'edit': false, 'delete': false },
+            manager: { 'create': false, 'edit': false, 'delete': false },
+            maid: { 'can_view': false },
+            supervisor: { 'create': true, 'edit': true, 'delete': true },
             edit_key: 'ClientID'
         };
 

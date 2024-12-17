@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 from typing import List
 from database import SessionLocal, engine
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -52,7 +53,8 @@ def delete_maid(maid_id: int, db: Session = Depends(get_db)):
     if db_maid is None:
         raise HTTPException(status_code=404, detail="Maid not found")
     
-    db.delete(db_maid)
+    db.execute(text("CALL del_maid(:maid_id)", {"maid_id": maid_id}))
+    #db.delete(db_maid)
     db.commit()
 
     return db_maid

@@ -5,6 +5,7 @@ import models, schemas
 from database import SessionLocal, engine
 from typing import List
 from datetime import datetime, timedelta
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -30,13 +31,17 @@ def create_booking(booking: schemas.BookingCreate, db: Session = Depends(get_db)
     
     db_booking = models.Booking(**booking.dict())
     db.add(db_booking)
+
+    room = db.query(models.Room).filter(models.Room.RoomID == booking.RoomID).first()
+    room.State = 'Занят'
+
     db.commit()
     db.refresh(db_booking)
     return db_booking
 
 @router.get("/", response_model=List[schemas.Booking])
-def read_bookings(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    bookings = db.query(models.Booking).offset(skip).limit(limit).all()
+def read_bookings(db: Session = Depends(get_db)):
+    bookings = db.query(models.Booking).all()
     return bookings
 
 @router.get("/{booking_id}", response_model=schemas.Booking)
@@ -71,9 +76,10 @@ def update_booking(booking_id: int, booking: schemas.BookingCreate, db: Session 
 @router.delete("/{booking_id}", response_model=schemas.Booking)
 def delete_booking(booking_id: int, db: Session = Depends(get_db)):
     db_booking = db.query(models.Booking).filter(models.Booking.BookingID == booking_id).first()
+
     if db_booking is None:
         raise HTTPException(status_code=404, detail="Booking not found")
     
-    db.delete(db_booking)
+    db.execute(text("CALL del_booking(:booking_id)", {"booking_id": booking_id}))
     db.commit()
     return db_booking

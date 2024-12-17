@@ -21,26 +21,53 @@ const DataTableComponent = ({ config }) => {
     const [loading, setLoading] = useState(true);
     const toast = useRef(null);
 
+    let currentSetting = '';
+    if (role === 'Менеджер') {
+        currentSetting = 'manager';
+    }
+    if (role === 'Администратор') {
+        currentSetting = 'admin';
+    }
+    if (role === 'Управляющий'){
+        currentSetting = 'control';
+    }
+    if (role === 'Директор') {
+        currentSetting = 'supervisor';
+    }
+    if (role === 'Горничная') {
+        currentSetting = 'maid';
+    }
+
     const filterss = {
         global: { value: null, matchMode: 'contains' },
-        teacher_id: { value: null, matchMode: 'contains' },
-        attendance_id: { value: null, matchMode: 'contains' },
-        login: { value: null, matchMode: 'contains' },
-        attendance_status: { value: null, matchMode: 'contains' },
-        lesson_id: { value: null, matchMode: 'contains' },
-        material_id: { value: null, matchMode: 'contains' },
+        RoomID: { value: null, matchMode: 'contains' },
+        FullName: { value: null, matchMode: 'contains' },
+        Phone: { value: null, matchMode: 'contains' },
+        DateStart: { value: null, matchMode: 'contains' },
+        DateEnd: { value: null, matchMode: 'contains' },
+        MaidID: { value: null, matchMode: 'contains' },
+        DateTime: { value: null, matchMode: 'contains' },
+        CleaningState: { value: null, matchMode: 'contains' },
+        Position: { value: null, matchMode: 'contains' },
+        Birthday: { value: null, matchMode: 'contains' },
+        Login: { value: null, matchMode: 'contains' },
+        Password: { value: null, matchMode: 'contains' },
+        Type: { value: null, matchMode: 'contains' },
+        Size: { value: null, matchMode: 'contains' },
+        Floor: { value: null, matchMode: 'contains' },
+        State: { value: null, matchMode: 'contains' },
+        Price: { value: null, matchMode: 'contains' },
         name: { value: null, matchMode: 'contains' },
-        description: { value: null, matchMode: 'contains' },
-        cost: { value: null, matchMode: 'contains' },
-        duration: { value: null, matchMode: 'contains' },
-        group_number: { value: null, matchMode: 'contains' },
-        course_name: { value: null, matchMode: 'contains' },
-        date: { value: null, matchMode: 'contains' },
-        full_name: { value: null, matchMode: 'contains' },
-        contact_info: { value: null, matchMode: 'contains' },
-        qualification: { value: null, matchMode: 'contains' },
-        grade: { value: null, matchMode: 'contains' }
-        
+        Description: { value: null, matchMode: 'contains' },
+        ClientID: { value: null, matchMode: 'contains' },
+        ClientRate: { value: null, matchMode: 'contains' },
+        Name: { value: null, matchMode: 'contains' },
+        SettlingID: { value: null, matchMode: 'contains' },
+        Amount: { value: null, matchMode: 'contains' },
+        SettlingDate: { value: null, matchMode: 'contains' },
+        OutDate: { value: null, matchMode: 'contains' },
+        Sex: { value: null, matchMode: 'contains' },
+        Passport: { value: null, matchMode: 'contains' },
     }
 
     const [filters, setFilters] = useState(filterss);
@@ -147,10 +174,11 @@ const DataTableComponent = ({ config }) => {
         }
     };
 
+    console.log(currentSetting, config[currentSetting]);
     const header = (
         <div>
             <h2>{config.title}</h2>
-            {role !== 'student' && (
+            {config[currentSetting]['create'] && (
                 <Button 
                     label="" 
                     icon="pi pi-plus" 
@@ -172,14 +200,14 @@ const DataTableComponent = ({ config }) => {
     );
 
     if (loading) {
-        return <div>Загрузка...</div>; // Индикатор загрузки
+        return <div>Загрузка...</div>;
     }
 
     return (
         <>
             <Toast ref={toast} />
             <DataTable
-                style={{ padding: '16px' }}
+                style={{ padding: '16px', minHeight: 'calc(100vh - 190px)' }}
                 value={data}
                 showGridlines
                 rows={10}
@@ -204,26 +232,26 @@ const DataTableComponent = ({ config }) => {
                     /> 
                 ))}
 
-                <Column
+                {(config[currentSetting]['edit'] || config[currentSetting]['delete']) && <Column
                     header="Действия"
                     body={(rowData) => (
                         role !== 'student' ? (
                             <div style={{ display: 'flex', gap: '20px' }}>
-                                <Button
-                                    label="Редактировать"
-                                    icon="pi pi-pencil"
-                                    onClick={() => handleEdit(rowData)}
-                                />
-                                <Button
-                                    label="Удалить"
-                                    icon="pi pi-times"
-                                    onClick={() => handleDelete(rowData)}
-                                />
+                                {
+                                config[currentSetting]['edit'] && 
+                                <Button label="Редактировать" icon="pi pi-pencil" onClick={() => handleEdit(rowData)} />
+                                }
+
+                                {
+                                config[currentSetting]['delete'] && 
+                                <Button label="Удалить" icon="pi pi-trash" onClick={() => handleDelete(rowData)} />
+                                }
+
                             </div>
                         ) : null
                     )}
                     style={{ minWidth: '8rem' }}
-                />
+                /> }
             </DataTable>
 
             <Dialog header="Добавить Запись" visible={isModalOpenAdd} onHide={() => setIsModalOpenAdd(false)}>

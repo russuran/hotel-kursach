@@ -5,6 +5,7 @@ import models, schemas
 from typing import List
 from database import SessionLocal, engine
 from datetime import datetime, timedelta
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -76,6 +77,7 @@ def delete_settling(settling_id: int, db: Session = Depends(get_db)):
     if db_settling is None:
         raise HTTPException(status_code=404, detail="Settling not found")
     
-    db.delete(db_settling)
+    db.execute(text("CALL del_settling(:settling_id)", {"settling_id": settling_id}))
+    #db.delete(db_settling)
     db.commit()
     return db_settling

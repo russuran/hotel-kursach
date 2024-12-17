@@ -95,14 +95,14 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 @app.post("/login")
 async def login(data: schemas.LoginSchema, response: Response, db: Session = Depends(get_db)):
     user = db.query(models.Employee).filter(models.Employee.Login == data.login).first()
-    print(user)
     if user is not None:
         if user.Password == data.password:
+            print(123)
             access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(data={"sub": str(user.WorkerID)}, expires_delta=access_token_expires)
             
             response.status_code = 200
-            return {"access_token": access_token, "token_type": "bearer", "role": user.Position}
+            return {"access_token": access_token, "token_type": "bearer", "role": user.Position, "name": user.FullName}
 
     response.status_code = 401
     return {"error": "Неверный логин или пароль"}
@@ -116,7 +116,7 @@ async def read_users_me(current_user: models.Employee = Depends(get_current_user
 @app.get("/list_of_rooms")
 def list_of_rooms(db: Session = Depends(get_db)):
     rooms = db.query(models.Room).all()
-    return [{"label": f'{room.Type} | {room.Size}мкв | {room.Floor}эт', "value": room.RoomID} for room in rooms]
+    return [{"label": f'{room.Type} | {room.Size}мкв | {room.Floor}эт | {room.RoomID}', "value": room.RoomID} for room in rooms]
 
 @app.get("/sc_list")
 def sc_list(db: Session = Depends(get_db)):
@@ -155,6 +155,10 @@ def list_of_maid(db: Session = Depends(get_db)):
         ret_list.append(ret)
 
     return ret_list
+
+@app.get("/user_data")
+def user_data(db: Session = Depends(get_db), current_user: models.Employee = Depends(get_current_user)):
+    return { 'name': current_user.FullName, 'role': current_user.Position }
 
 if __name__ == "__main__":
     import uvicorn

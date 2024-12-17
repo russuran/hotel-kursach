@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 from typing import List
 from database import SessionLocal, engine
-
+from sqlalchemy import text
 router = APIRouter()
 
 def get_db():
@@ -45,8 +45,8 @@ def create_room(room: schemas.RoomCreate, db: Session = Depends(get_db)):
         return db_room
 
 @router.get("/", response_model=List[schemas.Room])
-def read_rooms(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    rooms = db.query(models.Room).offset(skip).limit(limit).all()
+def read_rooms(db: Session = Depends(get_db)):
+    rooms = db.query(models.Room).all()
     return rooms
 
 @router.get("/{room_id}", response_model=schemas.Room)
@@ -91,12 +91,14 @@ def update_room(room_id: int, room: schemas.RoomCreate, db: Session = Depends(ge
     db.refresh(db_room)
     return db_room
 
-@router.delete("/{room_id}", response_model=schemas.Room)
+@router.delete("/{room_id}")
 def delete_room(room_id: int, db: Session = Depends(get_db)):
     db_room = db.query(models.Room).filter(models.Room.RoomID == room_id).first()
     if db_room is None:
                 raise HTTPException(status_code=404, detail="Room not found")
     
-    db.delete(db_room)
+
+    db.execute(text("CALL del_room(:r_id)"), {"r_id": room_id})
+
     db.commit()
-    return db_room
+    return {'status': 'ok'}

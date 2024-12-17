@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 from database import SessionLocal, engine
 from datetime import datetime, timedelta
-
+from sqlalchemy import text
 router = APIRouter()
 
 def get_db():
@@ -81,7 +81,9 @@ def delete_employee(employee_id: int, db: Session = Depends(get_db)):
             db.delete(db_maid)
             db.commit()
 
-    db.delete(db_employee)
+    db.execute(text("CALL del_employee(:employee_id)", {"employee_id": employee_id}))
+    #db.delete(db_employee)
+
     db.commit()
 
     return db_employee
