@@ -28,12 +28,15 @@ def create_booking(booking: schemas.BookingCreate, db: Session = Depends(get_db)
     if booking.DateStart.date() < datetime.now().date():
         return {'error': 'Дата начала бронирования не может быть меньше текущей даты'}
     
-    
-    db_booking = models.Booking(**booking.dict())
-    db.add(db_booking)
 
     room = db.query(models.Room).filter(models.Room.RoomID == booking.RoomID).first()
+    if room.State == 'Занят':
+        return {'error': 'Комната занята'}
+
     room.State = 'Занят'
+
+    db_booking = models.Booking(**booking.dict())
+    db.add(db_booking)
 
     db.commit()
     db.refresh(db_booking)
@@ -80,6 +83,16 @@ def delete_booking(booking_id: int, db: Session = Depends(get_db)):
     if db_booking is None:
         raise HTTPException(status_code=404, detail="Booking not found")
     
-    db.execute(text("CALL del_booking(:booking_id)", {"booking_id": booking_id}))
+    try:
+        db.execute(text("CALL del_booking(:booking_id)"), {"booking_id": booking_id})
+    except Exception as e:
+        db.rollback()
+
+    
+    
+    room = db.query(models.Room).filter(models.Room.RoomID == db_booking.RoomID).first()
+    room.State = 'Свободен'
+
     db.commit()
+
     return db_booking

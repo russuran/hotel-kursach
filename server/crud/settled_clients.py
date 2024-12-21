@@ -73,9 +73,11 @@ def delete_settled_client(ClientID: int, SettlingID: int, db: Session = Depends(
     if db_settled_client is None:
         raise HTTPException(status_code=404, detail="Settled client not found")
     
-    db.execute(text("CALL del_settled_client(:ClientID, :SettlingID)", {"ClientID": ClientID, "SettlingID": SettlingID}))
-
-    #db.delete(db_settled_client)
+    try:
+        db.execute(text("CALL del_settled_client(:ClientID, :SettlingID)"), {"ClientID": ClientID, "SettlingID": SettlingID})
+    except Exception as e:
+        pass
+    db.delete(db_settled_client)
     db.commit()
     
     return db_settled_client

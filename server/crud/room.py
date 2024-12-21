@@ -98,7 +98,11 @@ def delete_room(room_id: int, db: Session = Depends(get_db)):
                 raise HTTPException(status_code=404, detail="Room not found")
     
 
-    db.execute(text("CALL del_room(:r_id)"), {"r_id": room_id})
+    try:
+        db.execute(text("CALL del_room(:r_id)"), {"r_id": room_id})
+    except Exception as e:
+        pass
+    db.delete(db_room)
 
     db.commit()
     return {'status': 'ok'}

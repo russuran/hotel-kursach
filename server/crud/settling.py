@@ -28,6 +28,16 @@ def create_settling(settling: schemas.SettlingCreate, db: Session = Depends(get_
         return {'error': 'Дата начала бронирования не может быть меньше текущей даты'}
 
 
+    existing_settling = db.query(models.Settling).filter(
+        models.Settling.RoomID == settling.RoomID,
+        models.Settling.SettlingDate < settling.OutDate,
+        models.Settling.OutDate > settling.SettlingDate
+    ).first()
+
+    if existing_settling is not None:
+        return {'error': 'Существующее бронирование пересекается с новыми датами'}
+
+
     data = settling.dict()
     db_settling = models.Settling(**data)
     db.add(db_settling)
@@ -77,7 +87,11 @@ def delete_settling(settling_id: int, db: Session = Depends(get_db)):
     if db_settling is None:
         raise HTTPException(status_code=404, detail="Settling not found")
     
-    db.execute(text("CALL del_settling(:settling_id)", {"settling_id": settling_id}))
-    #db.delete(db_settling)
+    try:
+        db.execute(text("CALL del_settling(:settling_id)"), {"settling_id": settling_id})
+    except Exception as e:
+        pass
+
+    db.delete(db_settling)
     db.commit()
     return db_settling

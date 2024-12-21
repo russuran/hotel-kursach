@@ -53,9 +53,11 @@ def delete_cleaning_schedule(cleaning_id: int, db: Session = Depends(get_db)):
     db_schedule = db.query(models.CleaningSchedule).filter(models.CleaningSchedule.CleaningID == cleaning_id).first()
     if db_schedule is None:
         raise HTTPException(status_code=404, detail="Cleaning schedule not found")
-    
-    db.execute(text("CALL del_cleaning_schedule(:cleaning_id)", {"cleaning_id": cleaning_id}))
+    try:
+        db.execute(text("CALL del_cleaning_schedule(:cleaning_id)"), {"cleaning_id": cleaning_id})
+    except Exception as e:
+        pass
 
-    #db.delete(db_schedule)
+    db.delete(db_schedule)
     db.commit()
     return db_schedule

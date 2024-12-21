@@ -71,7 +71,11 @@ def delete_service(service_id: Any, db: Session = Depends(get_db)):
     if db_service is None:
         raise HTTPException(status_code=404, detail="Service not found")
     
-    db.execute(text("CALL del_service(:service_id)", {"service_id": service_id}))
-    #db.delete(db_service)
+    try:
+        db.execute(text("CALL del_service(:service_id)"), {"service_id": service_id})
+    except Exception as e:
+        pass
+    
+    db.delete(db_service)
     db.commit()
     return db_service

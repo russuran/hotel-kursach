@@ -116,7 +116,16 @@ async def read_users_me(current_user: models.Employee = Depends(get_current_user
 @app.get("/list_of_rooms")
 def list_of_rooms(db: Session = Depends(get_db)):
     rooms = db.query(models.Room).all()
-    return [{"label": f'{room.Type} | {room.Size}мкв | {room.Floor}эт | {room.RoomID}', "value": room.RoomID} for room in rooms]
+    ret_list = []
+    for room in rooms:
+        ret = {}
+        if room is not None:
+            ret['label'] = f'{room.Type} | {room.Size}мкв | {room.Floor}эт | {room.RoomID}'
+            ret['value'] = room.RoomID
+        ret_list.append(ret)
+
+    return ret_list
+
 
 @app.get("/sc_list")
 def sc_list(db: Session = Depends(get_db)):
@@ -125,8 +134,9 @@ def sc_list(db: Session = Depends(get_db)):
     for settling in settlings:
         ret = {}
         room = db.query(models.Room).filter(models.Room.RoomID == settling.RoomID).first()
-        ret['label'] = f'{room.Type} | {room.Size}мкв | {room.Floor}эт + {settling.SettlingDate} - {settling.OutDate}'
-        ret['value'] = settling.BookingNumber
+        if room is not None:
+            ret['label'] = f'{room.Type} | {room.Size}мкв | {room.Floor}эт + {settling.SettlingDate} - {settling.OutDate}'
+            ret['value'] = settling.BookingNumber
 
         ret_list.append(ret)
 
@@ -135,13 +145,29 @@ def sc_list(db: Session = Depends(get_db)):
 @app.get("/list_of_clients")
 def list_of_clients(db: Session = Depends(get_db)): 
     clients = db.query(models.Client).all()
-    return [{"value": client.ClientID, "label": client.FullName} for client in clients]
+    ret_list = []
+    for client in clients:
+        ret = {}
+        if client is not None:
+            ret['label'] = client.FullName
+            ret['value'] = client.ClientID
+        ret_list.append(ret)
+
+    return ret_list
 
 @app.get("/services_list")
 def service_list(db: Session = Depends(get_db)):
     services = db.query(models.Service).all()
+    ret_list = []
+    for service in services:
+        ret = {}
+        if service is not None:
+            ret['label'] = service.name
+            ret['value'] = service.name
+        ret_list.append(ret)
 
-    return [{"label": service.name, "value": service.name} for service in services]
+    return ret_list
+
 
 @app.get("/list_of_maids")
 def list_of_maid(db: Session = Depends(get_db)):
@@ -149,9 +175,10 @@ def list_of_maid(db: Session = Depends(get_db)):
     ret_list = []
     for maid in maids:
         ret = {}
-        name = db.query(models.Employee).filter(models.Employee.WorkerID == maid.WorkerID).first().FullName
-        ret['label'] = name
-        ret['value'] = maid.MaidID
+        name = db.query(models.Employee).filter(models.Employee.WorkerID == maid.WorkerID).first()
+        if name is not None:
+            ret['label'] = name.FullName
+            ret['value'] = maid.MaidID
         ret_list.append(ret)
 
     return ret_list

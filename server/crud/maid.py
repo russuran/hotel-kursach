@@ -53,8 +53,11 @@ def delete_maid(maid_id: int, db: Session = Depends(get_db)):
     if db_maid is None:
         raise HTTPException(status_code=404, detail="Maid not found")
     
-    db.execute(text("CALL del_maid(:maid_id)", {"maid_id": maid_id}))
-    #db.delete(db_maid)
+    try:
+        db.execute(text("CALL del_maid(:maid_id)"), {"maid_id": maid_id})
+    except Exception as e:
+        pass
+    db.delete(db_maid)
     db.commit()
 
     return db_maid

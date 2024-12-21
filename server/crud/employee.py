@@ -81,8 +81,12 @@ def delete_employee(employee_id: int, db: Session = Depends(get_db)):
             db.delete(db_maid)
             db.commit()
 
-    db.execute(text("CALL del_employee(:employee_id)", {"employee_id": employee_id}))
-    #db.delete(db_employee)
+    try:
+        db.execute(text("CALL del_employee(:employee_id)"), {"employee_id": employee_id})
+    except Exception as e:
+        pass
+    
+    db.delete(db_employee)
 
     db.commit()
 

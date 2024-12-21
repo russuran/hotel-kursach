@@ -54,7 +54,7 @@ class Booking(Base):
     __tablename__ = 'Booking'
     
     BookingID = Column(Integer, primary_key=True, index=True)
-    RoomID = Column(Integer, ForeignKey('Room.RoomID'), nullable=False)
+    RoomID = Column(Integer, ForeignKey('Room.RoomID', ondelete='CASCADE'), nullable=False)
     FullName = Column(String, nullable=False)
     Phone = Column(String, nullable=False)
     DateStart = Column(Date, nullable=False)
@@ -92,8 +92,8 @@ class CleaningSchedule(Base):
     CleaningID = Column(Integer, primary_key=True, index=True)
     CleaningState = Column(String(50), default='Не убрано')
     DateTime = Column(Date, nullable=False)
-    RoomID = Column(Integer, ForeignKey('Room.RoomID'), nullable=False)
-    MaidID = Column(Integer, ForeignKey('Maid.MaidID'), nullable=False)
+    RoomID = Column(Integer, ForeignKey('Room.RoomID', ondelete='CASCADE'), nullable=False)
+    MaidID = Column(Integer, ForeignKey('Maid.MaidID', ondelete='CASCADE'), nullable=False)
 
     maid = relationship("Maid", back_populates="cleaning_schedules")
 
@@ -102,7 +102,7 @@ class SettledClient(Base):
     __tablename__ = 'settled_client'
     
     ClientID = Column(Integer, ForeignKey('client.ClientID'), primary_key=True, nullable=False)
-    SettlingID = Column(Integer, ForeignKey('Settling.BookingNumber'), primary_key=True, nullable=False)
+    SettlingID = Column(Integer, ForeignKey('Settling.BookingNumber', ondelete='CASCADE'), primary_key=True, nullable=False)
     ClientRate = Column(Integer, nullable=True)
 
     client = relationship("Client", back_populates="settled_clients")
@@ -113,7 +113,7 @@ class SettlingService(Base):
     __tablename__ = 'Settling_service'
     
     Name = Column(String, ForeignKey('Service.name'), primary_key=True, nullable=False)
-    SettlingID = Column(Integer, ForeignKey('Settling.BookingNumber'), primary_key=True, nullable=False)
+    SettlingID = Column(Integer, ForeignKey('Settling.BookingNumber', ondelete='CASCADE'), primary_key=True, nullable=False)
     Amount = Column(Integer, default=1)
 
     settling = relationship("Settling", back_populates="settling_services")
