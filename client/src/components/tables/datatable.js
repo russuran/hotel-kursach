@@ -53,6 +53,7 @@ const DataTableComponent = ({ config }) => {
         OutDate: { value: null, matchMode: 'contains' },
         Sex: { value: null, matchMode: 'contains' },
         Passport: { value: null, matchMode: 'contains' },
+        BookingNumber: { value: null, matchMode: 'contains' },
     }
 
     const [filters, setFilters] = useState(filterss);
@@ -67,7 +68,13 @@ const DataTableComponent = ({ config }) => {
                         const dropdownValue = col.dropdown.find(option => option.value === item[col.field]);
                         return dropdownValue ? dropdownValue.label.toLowerCase().includes(filterValue) : true;
                     } else {
-                        return String(item[col.field]).toLowerCase().includes(filterValue);
+                        try {
+                            return String(item[col.field]).toLowerCase().includes(filterValue);
+                        }
+                        catch (error) {
+                            console.log(error);
+                        }
+                        return item[col.field].toLowerCase().includes(filterValue);
                     }
                 }
                 return true; // Если фильтр не установлен, возвращаем true

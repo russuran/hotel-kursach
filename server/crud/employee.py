@@ -70,7 +70,7 @@ def create_employee(employee: schemas.EmployeeCreate, db: Session = Depends(get_
     db.commit()
     db.refresh(db_employee)
 
-    if employee.Position == 'maid':
+    if employee.Position == 'Горничная':
         
         db_maid = db.query(models.Maid).filter(models.Maid.WorkerID == db_employee.WorkerID).first()
         if db_maid is not None:
@@ -97,6 +97,18 @@ def update_employee(employee_id: int, employee: schemas.EmployeeCreate, db: Sess
     for key, value in employee.dict().items():
         setattr(db_employee, key, value)
     
+    if employee.Position == 'Горничная':
+        
+        db_maid = db.query(models.Maid).filter(models.Maid.WorkerID == db_employee.WorkerID).first()
+        if db_maid is not None:
+            return {'error': 'Такая запись уже существует?'}
+        else:
+            maid = schemas.MaidCreate(WorkerID=db_employee.WorkerID)
+            db_maid = models.Maid(**maid.dict())
+            db.add(db_maid)
+            db.commit()
+            db.refresh(db_maid)
+    
     db.commit()
     db.refresh(db_employee)
     return db_employee
@@ -108,13 +120,12 @@ def delete_employee(employee_id: int, db: Session = Depends(get_db)):
     if db_employee is None:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    if db_employee.Position == 'maid':
+    if db_employee.Position == 'Горничная':
         db_maid = db.query(models.Maid).filter(models.Maid.WorkerID == db_employee.WorkerID).first()
         if db_maid == None:
             return {'error': 'Такая запись уже не существует?'}
         else:
             db.delete(db_maid)
-            db.commit()
 
     try:
         db.execute(text("CALL del_employee(:employee_id)"), {"employee_id": employee_id})

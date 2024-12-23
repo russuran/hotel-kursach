@@ -126,7 +126,7 @@ export const initializeConfigs = async () => {
         const roomConfig = {
             apiEndpoint: 'http://127.0.0.1:5000/rooms/',
             columns: [
-                { field: 'RoomID', header: 'Номер комнаты', sortable: true, filter: true },
+                { field: 'RoomID', header: 'Номер комнаты', sortable: true, filter: true, dropdown: roomOptions },
                 { field: 'Type', header: 'Тип комнаты', sortable: true, filter: true },
                 { field: 'Size', header: 'Размер комнаты', sortable: true, filter: true },
                 { field: 'Floor', header: 'Этаж', sortable: true, filter: true },
@@ -217,6 +217,7 @@ export const initializeConfigs = async () => {
         const settlingConfig = {
             apiEndpoint: 'http://127.0.0.1:5000/settling/',
             columns: [
+                { field: 'BookingNumber', header: 'Номер бронирования', sortable: true, filter: true },
                 { field: 'RoomID', header: 'Комната', sortable: true, filter: true, dropdown: roomOptions },
                 { field: 'SettlingDate', header: 'Дата заселения', sortable: true, filter: true, type: 'date' },
                 { field: 'OutDate', header: 'Дата выселения', sortable: true, filter: true, type: 'date' },
@@ -240,7 +241,7 @@ export const initializeConfigs = async () => {
             columns: [
                 { field: 'FullName', header: 'Имя клиента', sortable: true, filter: true },
                 { field: 'Birthday', header: 'Дата рождения', sortable: true, filter: true, type: 'date' },
-                { field: 'Sex', header: 'Пол', sortable: true, filter: true, dropdown: [{label: 'Мужской', value: 'М'}, {label: 'Женский', value: 'Ж'}] },
+                { field: 'Sex', header: 'Пол', sortable: true, filter: true, dropdown: [{label: 'Мужской', value: 'Мужской'}, {label: 'Женский', value: 'Женский'}] },
                 { field: 'Passport', header: 'Паспорт', sortable: true, filter: true, mask: '999999' },
                 { field: 'Phone', header: 'Телефон', sortable: true, filter: true, mask: '+7 (999) 999-99-99' },
             ],

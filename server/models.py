@@ -13,7 +13,7 @@ class Client(Base):
     Passport = Column(Integer, unique=True)
     Phone = Column(String, unique=True)
 
-    settled_clients = relationship("SettledClient", back_populates="client")
+    settled_clients = relationship("SettledClient", back_populates="client", cascade="all, delete-orphan")
 
 # Модель Room
 class Room(Base):
@@ -26,8 +26,8 @@ class Room(Base):
     State = Column(String(20), default='Свободен')
     Floor = Column(Integer, default=1)
 
-    bookings = relationship("Booking", back_populates="room")
-    settlings = relationship("Settling", back_populates="room")
+    bookings = relationship("Booking", back_populates="room", cascade="all, delete-orphan")
+    settlings = relationship("Settling", back_populates="room", cascade="all, delete-orphan")
 
 # Модель Maid
 class Maid(Base):
@@ -36,7 +36,7 @@ class Maid(Base):
     MaidID = Column(Integer, primary_key=True, index=True)
     WorkerID = Column(Integer, nullable=False)
 
-    cleaning_schedules = relationship("CleaningSchedule", back_populates="maid")
+    cleaning_schedules = relationship("CleaningSchedule", back_populates="maid", cascade="all, delete-orphan")
 
 # Модель Employee
 class Employee(Base):
@@ -69,11 +69,11 @@ class Settling(Base):
     BookingNumber = Column(Integer, primary_key=True, index=True)
     SettlingDate = Column(Date)
     OutDate = Column(Date, nullable=False)
-    RoomID = Column(Integer, ForeignKey('Room.RoomID'), nullable=False)
+    RoomID = Column(Integer, ForeignKey('Room.RoomID', ondelete='CASCADE'), nullable=False)
 
     room = relationship("Room", back_populates="settlings")
-    settling_services = relationship("SettlingService", back_populates="settling")
-    settled_clients = relationship("SettledClient", back_populates="settling")
+    settling_services = relationship("SettlingService", back_populates="settling", cascade="all, delete-orphan")
+    settled_clients = relationship("SettledClient", back_populates="settling", cascade="all, delete-orphan")
 
 # Модель Service
 class Service(Base):
@@ -83,7 +83,7 @@ class Service(Base):
     Description = Column(String(500), nullable=True)
     Price = Column(DECIMAL(10, 2))
 
-    settling_services = relationship("SettlingService", back_populates="service")
+    settling_services = relationship("SettlingService", back_populates="service", cascade="all, delete-orphan")
 
 # Модель CleaningSchedule
 class CleaningSchedule(Base):
@@ -118,3 +118,4 @@ class SettlingService(Base):
 
     settling = relationship("Settling", back_populates="settling_services")
     service = relationship("Service", back_populates="settling_services")
+

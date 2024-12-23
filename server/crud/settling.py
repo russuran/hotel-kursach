@@ -88,7 +88,7 @@ def delete_settling(settling_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Settling not found")
 
     
-    settled_client = db.query(models.SettledClient).filter(models.SettledClient.SettlingID == ).first()
+    #settled_client = db.query(models.SettledClient).filter(models.SettledClient.SettlingID == ).first()
 
     # try:
     #     db.execute(text("CALL del_settling(:settling_id)"), {"settling_id": settling_id})

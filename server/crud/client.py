@@ -79,10 +79,10 @@ def delete_client(client_id: int, db: Session = Depends(get_db)):
     if db_client is None:
         raise HTTPException(status_code=404, detail="Client not found")
     
-    try:
-        db.execute(text("CALL del_client(:client_id)"), {"client_id": client_id})
-    except Exception as e:
-        pass
+    # try:
+    #     db.execute(text("CALL del_client(:client_id)"), {"client_id": client_id})
+    # except Exception as e:
+    #     pass
     
     db.delete(db_client)
     db.commit()
