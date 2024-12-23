@@ -38,6 +38,7 @@ function Nav() {
             urls['/clients'] = 'Клиенты';
             urls['/settledClients'] = 'Заселение Клиента';
             urls['/services'] = 'Услуги';
+            urls['/settling'] = 'Заселение';
             //urls['/employees'] = 'Сотрудники';
         };
     

@@ -16,8 +16,8 @@ def get_db():
         db.close()
 
 @router.get("/", response_model=List[schemas.Maid])
-def read_maids(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    maids = db.query(models.Maid).offset(skip).limit(limit).all()
+def read_maids(db: Session = Depends(get_db)):
+    maids = db.query(models.Maid).all()
 
     return maids
 

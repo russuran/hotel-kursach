@@ -29,10 +29,21 @@ def create_booking(booking: schemas.BookingCreate, db: Session = Depends(get_db)
         return {'error': 'Дата начала бронирования не может быть меньше текущей даты'}
     
 
-    room = db.query(models.Room).filter(models.Room.RoomID == booking.RoomID).first()
-    if room.State == 'Занят':
-        return {'error': 'Комната занята'}
+    curr_bookings = db.query(models.Booking).filter(models.Booking.RoomID == booking.RoomID).all()
 
+    for booking_in in curr_bookings:
+        #print(555, booking_in.DateStart, booking.DateStart.date(), booking_in.DateStart <= booking.DateStart.date(), booking_in.DateEnd >= booking.DateEnd.date())
+        if booking_in.DateStart >= booking.DateStart.date() and booking_in.DateEnd <= booking.DateEnd.date():
+            return {'error': 'Бронирование данной комнаты пересекается с существующим'}
+        
+        if booking_in.DateStart <= booking.DateStart.date() and booking_in.DateEnd >= booking.DateStart.date():
+            return {'error': 'Бронирование данной комнаты пересекается с существующим'}
+        
+        if booking_in.DateStart <= booking.DateEnd.date() and booking_in.DateEnd >= booking.DateEnd.date():
+            return {'error': 'Бронирование данной комнаты пересекается с существующим'}
+
+
+    room = db.query(models.Room).filter(models.Room.RoomID == booking.RoomID).first()
     room.State = 'Занят'
 
     db_booking = models.Booking(**booking.dict())
@@ -65,6 +76,21 @@ def update_booking(booking_id: int, booking: schemas.BookingCreate, db: Session 
     if booking.DateStart.date() < datetime.now().date():
         return {'error': 'Дата начала бронирования не может быть меньше текущей даты'}
 
+    curr_bookings = db.query(models.Booking).filter(models.Booking.RoomID == booking.RoomID).all()
+
+    for booking_in in curr_bookings:
+        if booking_in.BookingID == booking_id:
+            continue
+        #print(555, booking_in.DateStart, booking.DateStart.date(), booking_in.DateStart <= booking.DateStart.date(), booking_in.DateEnd >= booking.DateEnd.date())
+        if booking_in.DateStart >= booking.DateStart.date() and booking_in.DateEnd <= booking.DateEnd.date():
+            return {'error': 'Бронирование данной комнаты пересекается с существующим'}
+        
+        if booking_in.DateStart <= booking.DateStart.date() and booking_in.DateEnd >= booking.DateStart.date():
+            return {'error': 'Бронирование данной комнаты пересекается с существующим'}
+        
+        if booking_in.DateStart <= booking.DateEnd.date() and booking_in.DateEnd >= booking.DateEnd.date():
+            return {'error': 'Бронирование данной комнаты пересекается с существующим'}
+
     db_booking = db.query(models.Booking).filter(models.Booking.BookingID == booking_id).first()
     if db_booking is None:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -76,23 +102,32 @@ def update_booking(booking_id: int, booking: schemas.BookingCreate, db: Session 
     db.refresh(db_booking)
     return {'status': 'ok'}
 
-@router.delete("/{booking_id}", response_model=schemas.Booking)
+@router.delete("/{booking_id}")
 def delete_booking(booking_id: int, db: Session = Depends(get_db)):
     db_booking = db.query(models.Booking).filter(models.Booking.BookingID == booking_id).first()
 
     if db_booking is None:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    
+        pass #??
+
     try:
         db.execute(text("CALL del_booking(:booking_id)"), {"booking_id": booking_id})
     except Exception as e:
         db.rollback()
 
-    
-    
-    room = db.query(models.Room).filter(models.Room.RoomID == db_booking.RoomID).first()
-    room.State = 'Свободен'
 
-    db.commit()
+    
+    try:
+        room = db.query(models.Room).filter(models.Room.RoomID == db_booking.RoomID).first()
+        room.State = 'Свободен'
+        db.commit()
+    except Exception as e:
+        pass
 
-    return db_booking
+    try:
+        settling = db.query(models.Settling).filter(models.Settling.BookingNumber == booking_id).first()
+        db.delete(settling)
+        db.commit()
+    except Exception as e:
+        print(e)
+
+    return {'status': 'ok'}

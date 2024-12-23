@@ -5,6 +5,8 @@ import models, schemas
 from typing import List
 from database import SessionLocal, engine
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+
 
 router = APIRouter()
 
@@ -17,24 +19,25 @@ def get_db():
         
 @router.post("/")
 def create_settled_client(settled_client: schemas.SettledClientCreate, db: Session = Depends(get_db)):
-    try:
-        if type(int(settled_client.ClientRate)) != int:
-            return {'error': 'Оценка клиента должна быть числом'}
-        
-        if int(settled_client.ClientRate) < 0 or int(settled_client.ClientRate) > 10:
-                return {'error': 'Оценка клиента должна быть от 0 до 10'}
-    except:
-        return {'error': 'Оценка клиента должна быть числом'}
+    settled_client.ClientRate = 5
+    sclients = db.query(models.SettledClient).filter(models.SettledClient.SettlingID == settled_client.SettlingID).all()
+    print(sclients)
+    if len(sclients) >= 4:
+        return {'error': 'Превышено количество клиентов (максимум 4 на один номер)'}
 
-    db_settled_client = models.SettledClient(**settled_client.dict())
-    db.add(db_settled_client)
-    db.commit()
-    db.refresh(db_settled_client)
+    try:
+        db_settled_client = models.SettledClient(**settled_client.dict())
+        db.add(db_settled_client)
+        db.commit()
+        db.refresh(db_settled_client)
+    except IntegrityError:
+        return {'error': 'Такой клиент уже заселен'}
+    
     return db_settled_client
 
 @router.get("/", response_model=List[schemas.SettledClient])
-def read_settled_clients(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    settled_clients = db.query(models.SettledClient).offset(skip).limit(limit).all()
+def read_settled_clients(db: Session = Depends(get_db)):
+    settled_clients = db.query(models.SettledClient).all()
     return settled_clients
 
 @router.get("/{settled_client_id}", response_model=schemas.SettledClient)
@@ -50,6 +53,11 @@ def update_settled_client(ClientID: int, SettlingID: int, settled_client: schema
     if db_settled_client is None:
         raise HTTPException(status_code=404, detail="Settled client not found")
     
+    # sclients = db.query(models.SettledClient).filter(models.SettledClient.SettlingID == SettlingID).all()
+    # print(sclients)
+    # if len(sclients) >= 4:
+    #     return {'error': 'Превышено количество клиентов (максимум 4 на один номер)'}
+
     try:
         if type(int(settled_client.ClientRate)) != int:
             return {'error': 'Оценка клиента должна быть числом'}

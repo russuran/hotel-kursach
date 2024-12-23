@@ -35,8 +35,8 @@ def create_settling_service(settling_service: schemas.SettlingServiceCreate, db:
     return db_settling_service
 
 @router.get("/", response_model=List[schemas.SettlingService])
-def read_settling_services(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    settling_services = db.query(models.SettlingService).offset(skip).limit(limit).all()
+def read_settling_services(db: Session = Depends(get_db)):
+    settling_services = db.query(models.SettlingService).all()
     return settling_services
 
 @router.get("/{settling_service_id}", response_model=schemas.SettlingService)
@@ -65,16 +65,16 @@ def update_settling_service(Name: str, SettlingID: int, settling_service: schema
     db.refresh(db_settling_service)
     return db_settling_service
 
-@router.delete("/{settling_service_id}", response_model=schemas.SettlingService)
-def delete_settling_service(settling_service_id: int, db: Session = Depends(get_db)):
-    db_settling_service = db.query(models.SettlingService).filter(models.SettlingService.SettlingID == settling_service_id).first()
+@router.delete("/{name}/{settling_id}", response_model=schemas.SettlingService)
+def delete_settling_service(name: str, settling_id: int, db: Session = Depends(get_db)):
+    db_settling_service = db.query(models.SettlingService).filter(models.SettlingService.SettlingID == settling_id and models.SettlingService.Name == name).first()
     if db_settling_service is None:
         raise HTTPException(status_code=404, detail="Settling service not found")
     
-    try:
-        db.execute(text("CALL del_settling_service(:settling_service_id)"), {"settling_service_id": settling_service_id})
-    except Exception as e:
-        pass
+    # try:
+    #     db.execute(text("CALL del_settling_service(:settling_service_id)"), {"settling_service_id": settling_service_id})
+    # except Exception as e:
+    #     pass
 
     db.delete(db_settling_service)
     db.commit()

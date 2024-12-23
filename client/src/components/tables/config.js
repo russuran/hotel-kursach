@@ -126,10 +126,11 @@ export const initializeConfigs = async () => {
         const roomConfig = {
             apiEndpoint: 'http://127.0.0.1:5000/rooms/',
             columns: [
+                { field: 'RoomID', header: 'Номер комнаты', sortable: true, filter: true },
                 { field: 'Type', header: 'Тип комнаты', sortable: true, filter: true },
                 { field: 'Size', header: 'Размер комнаты', sortable: true, filter: true },
                 { field: 'Floor', header: 'Этаж', sortable: true, filter: true },
-                { field: 'State', header: 'Состояние комнаты', sortable: true, filter: true, dropdown: [{ value: 'Свободен', label: 'Свободен'}, { value: 'Занят', label: 'Занят' }]},
+                { field: 'State', header: 'Состояние комнаты', sortable: true, filter: true, disabled: '1', dropdown: [{ value: 'Свободен', label: 'Свободен'}, { value: 'Занят', label: 'Занят' }]},
                 { field: 'Price', header: 'Цена комнаты', sortable: true, filter: true },
                 
             ],
@@ -145,6 +146,7 @@ export const initializeConfigs = async () => {
             manager: { 'can_view': false },
             maid: { 'can_view': false },
             supervisor: { 'create': true, 'edit': true, 'delete': true },
+            can_be_deleted: null,
             edit_key: 'RoomID'
         };
 
@@ -173,7 +175,6 @@ export const initializeConfigs = async () => {
             columns: [
                 { field: 'ClientID', header: 'Имя клиента', sortable: true, filter: true, dropdown: clientsOptions },
                 { field: 'SettlingID', header: 'Бронирование', sortable: true, filter: true, dropdown: settlingOptions },
-                { field: 'ClientRate', header: 'Оценка клиента', sortable: true, filter: true }
                 
             ],
             initialState: {

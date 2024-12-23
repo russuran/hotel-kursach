@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { DataTable } from 'primereact/datatable';
 import { Calendar } from 'primereact/calendar';
@@ -21,22 +21,7 @@ const DataTableComponent = ({ config }) => {
     const [loading, setLoading] = useState(true);
     const toast = useRef(null);
 
-    let currentSetting = '';
-    if (role === 'Менеджер') {
-        currentSetting = 'manager';
-    }
-    if (role === 'Администратор') {
-        currentSetting = 'admin';
-    }
-    if (role === 'Управляющий'){
-        currentSetting = 'control';
-    }
-    if (role === 'Директор') {
-        currentSetting = 'supervisor';
-    }
-    if (role === 'Горничная') {
-        currentSetting = 'maid';
-    }
+    const token = localStorage.getItem('token');
 
     const filterss = {
         global: { value: null, matchMode: 'contains' },
@@ -72,6 +57,41 @@ const DataTableComponent = ({ config }) => {
 
     const [filters, setFilters] = useState(filterss);
 
+
+    const filteredData = useMemo(() => {
+        return data.filter(item => {
+            return config.columns.every(col => {
+                if (col.filter) {
+                    const filterValue = filters[col.field]?.value?.toLowerCase() || '';
+                    if (col.dropdown) {
+                        const dropdownValue = col.dropdown.find(option => option.value === item[col.field]);
+                        return dropdownValue ? dropdownValue.label.toLowerCase().includes(filterValue) : true;
+                    } else {
+                        return String(item[col.field]).toLowerCase().includes(filterValue);
+                    }
+                }
+                return true; // Если фильтр не установлен, возвращаем true
+            });
+        });
+    }, [data, filters, config.columns]);
+
+    let currentSetting = '';
+    if (role === 'Менеджер') {
+        currentSetting = 'manager';
+    }
+    if (role === 'Администратор') {
+        currentSetting = 'admin';
+    }
+    if (role === 'Управляющий'){
+        currentSetting = 'control';
+    }
+    if (role === 'Директор') {
+        currentSetting = 'supervisor';
+    }
+    if (role === 'Горничная') {
+        currentSetting = 'maid';
+    }
+
     const filterMatchModeOptions = {
         text: [
             { label: 'Содержит', value: 'contains' },
@@ -93,7 +113,11 @@ const DataTableComponent = ({ config }) => {
 
     const fetchData = async () => {
         try {
-            const response = await axios.get(config.apiEndpoint);
+            const response = await axios.get(config.apiEndpoint, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             setData(response.data);
         } catch (error) {
             console.error('Ошибка при загрузке данных', error);
@@ -111,13 +135,11 @@ const DataTableComponent = ({ config }) => {
     const handleDelete = async (item) => {
         try {
             const path = config.edit_key1 ? `${config.apiEndpoint}${item[config.edit_key]}/${item[config.edit_key1]}` : `${config.apiEndpoint}${item[config.edit_key]}`
-            console.log(path);
             await axios.delete(path);
             setData((prevData) => prevData.filter((prevItem) => prevItem[config.edit_key] !== item[config.edit_key]));
             toast.current.show({ severity: 'success', summary: 'Успех', detail: 'Запись удалена', life: 3000 });
             fetchData();
         } catch (error) {
-            console.error("Ошибка при удалении записи:", error);
             toast.current.show({ severity: 'error', summary: 'Ошибка', detail: 'Не удалось удалить запись', life: 3000 });
         }
     };
@@ -139,12 +161,19 @@ const DataTableComponent = ({ config }) => {
                 }
             }
             const path = config.edit_key1 ? `${config.apiEndpoint}${selectedItem[config.edit_key]}/${selectedItem[config.edit_key1]}` : `${config.apiEndpoint}${selectedItem[config.edit_key]}`
-            const response = await axios.put(path, updatedItem);
+            const response = await axios.put(path, updatedItem, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
             if (response.data['error']) {
                 toast.current.show({ severity: 'error', summary: 'Ошибка', detail: response.data['error'], life: 3000 });
             } else {
                 toast.current.show({ severity: 'success', summary: 'Успех', detail: 'Запись обновлена', life: 3000 });
+                if (response.data['msg']){
+                    toast.current.show({ severity: 'info', summary: 'Внимание', detail: response.data['msg'], life: 3000 });
+                }
                 setData((prevData) => prevData.map((item) => (item[config.edit_key] === selectedItem[config.edit_key] ? updatedItem : item)));
                 setIsModalOpenEdit(false);
                 fetchData();
@@ -174,7 +203,6 @@ const DataTableComponent = ({ config }) => {
         }
     };
 
-    console.log(currentSetting, config[currentSetting]);
     const header = (
         <div>
             <h2>{config.title}</h2>
@@ -202,13 +230,13 @@ const DataTableComponent = ({ config }) => {
     if (loading) {
         return <div>Загрузка...</div>;
     }
-
+    
     return (
         <>
             <Toast ref={toast} />
             <DataTable
                 style={{ padding: '16px', minHeight: 'calc(100vh - 190px)' }}
-                value={data}
+                value={filteredData}
                 showGridlines
                 rows={10}
                 filters={filters}
@@ -235,7 +263,7 @@ const DataTableComponent = ({ config }) => {
                 {(config[currentSetting]['edit'] || config[currentSetting]['delete']) && <Column
                     header="Действия"
                     body={(rowData) => (
-                        role !== 'student' ? (
+                        role !== 'фывфыв' ? (
                             <div style={{ display: 'flex', gap: '20px' }}>
                                 {
                                 config[currentSetting]['edit'] && 
@@ -243,7 +271,7 @@ const DataTableComponent = ({ config }) => {
                                 }
 
                                 {
-                                config[currentSetting]['delete'] && 
+                                config[currentSetting]['delete'] && config['can_be_deleted'] !== null &&
                                 <Button label="Удалить" icon="pi pi-trash" onClick={() => handleDelete(rowData)} />
                                 }
 
@@ -305,46 +333,47 @@ const DataTableComponent = ({ config }) => {
             </Dialog>
 
             <Dialog header="Редактировать Запись" visible={isModalOpenEdit} onHide={() => setIsModalOpenEdit(false)}>
-                <div>
-                    {config.columns.map((col) => (
-                        <div key={col.field} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '20px', gap: '20px' }}>
-                            <label>{col.header}</label>
-                            {col.dropdown ? (
-                                <Dropdown 
+            <div>
+                {config.columns.map((col) => (
+                    <div key={col.field} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '20px', gap: '20px' }}>
+                        <label>{col.header}</label>
+                        {col.dropdown ? (
+                            <Dropdown 
+                                style={{ width: '236px' }}
+                                value={newItem[col.field]}
+                                onChange={(e) => setNewItem({ ...newItem, [col.field]: e.value })}
+                                options={col.dropdown} 
+                                checkmark={true}  
+                                highlightOnSelect={false}
+                                disabled={col.disabled || (role === 'Горничная' && col.field !== 'CleaningState')} 
+                            />
+                        ) : (
+                            col.type === 'date' ? (
+                                <Calendar
                                     style={{ width: '236px' }}
-                                    value={newItem[col.field]}
-                                    onChange={(e) => setNewItem({ ...newItem, [col.field]: e.value })} // Используйте e.value
-                                    options={col.dropdown} 
-                                    checkmark={true}  
-                                    highlightOnSelect={false} 
+                                    value={newItem[col.field] instanceof Date ? newItem[col.field] : new Date(newItem[col.field])}
+                                    onChange={(e) => setNewItem({ ...newItem, [col.field]: e.value })}
+                                    disabled={col.disabled || (role === 'Горничная' && col.field !== 'CleaningState')}
+                                    dateFormat="yy-mm-dd"
                                 />
                             ) : (
-                                col.type === 'date' ? (
-                                    <Calendar
-                                        style={{ width: '236px' }}
-                                        value={newItem[col.field] instanceof Date ? newItem[col.field] : new Date(newItem[col.field])}
-                                        onChange={(e) => setNewItem({ ...newItem, [col.field]: e.value })} // Используйте e.value
-                                        disabled={col.disabled}
-                                        
-                                        dateFormat="yy-mm-dd"
-                                    />
-                                ) : (
-                                    <InputText
-                                        style={{ width: '236px' }}
-                                        value={newItem[col.field]}
-                                        onChange={(e) => setNewItem({ ...newItem, [col.field]: e.target.value })}
-                                        disabled={col.disabled}
-                                    />
-                                )
-                            )}
-                        </div>
-                    ))}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'right', marginTop: '20px', gap: '20px' }}>
-                    <Button label="Сохранить" icon="pi pi-check" onClick={handleUpdate} />
-                    <Button label="Отмена" icon="pi pi-times" onClick={() => setIsModalOpenEdit(false)} className="p-button-secondary" />
-                </div>
-            </Dialog>
+                                <InputText
+                                    style={{ width: '236px' }}
+                                    value={newItem[col.field]}
+                                    onChange={(e) => setNewItem({ ...newItem, [col.field]: e.target.value })}
+                                    disabled={col.disabled || (role === 'Горничная' && col.field !== 'CleaningState')}
+                                />
+                            )
+                        )}
+                    </div>
+                ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'right', marginTop: '20px', gap: '20px' }}>
+                <Button label="Сохранить" icon="pi pi-check" onClick={handleUpdate} />
+                <Button label="Отмена" icon="pi pi-times" onClick={() => setIsModalOpenEdit(false)} className="p-button-secondary" />
+            </div>
+        </Dialog>
+
         </>
     );
 };

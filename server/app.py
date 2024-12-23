@@ -8,6 +8,9 @@ from typing import List, Annotated, Any
 import time
 from datetime import datetime, timedelta
 import jwt
+from apscheduler.schedulers.background import BackgroundScheduler
+
+
 
 from crud.employee import router as employee_router
 from crud.maid import router as maids_router
@@ -53,6 +56,47 @@ def get_db():
         yield db 
     finally:
         db.close()
+
+#-------------Проверка состояния комнаты------------------
+def scheduled_task():
+    print(f"Задача выполнена в {datetime.now()}")
+    db = SessionLocal()  # Создаем сессию базы данных
+    try:
+        print(f"Задача выполнена в {datetime.now()}")
+        bookings = db.query(models.Booking).all()
+        rooms = db.query(models.Room).all()
+        for room in rooms:
+            for booking in bookings:
+                if booking.RoomID == room.RoomID:
+                    if booking.DateEnd <= datetime.now().date():
+                        room.State = 'Свободен'
+                    else:
+                        room.State = 'Занят'
+        
+        settling_rooms = [settling.RoomID for settling in db.query(models.Settling).all()]
+
+        for booking in bookings:
+            if booking.RoomID not in settling_rooms:
+                if abs((booking.DateStart - datetime.now().date()).days) >= 1:
+                    print(booking.RoomID, booking.DateStart, datetime.now().date(), abs((booking.DateStart - datetime.now().date()).days))
+                    db.delete(booking)
+                    db.query(models.Room).filter(models.Room.RoomID == booking.RoomID).update({'State': 'Свободен'})
+                        
+        
+
+
+        db.commit()
+    finally:
+        db.close()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(scheduled_task, 'cron', hour=00, minute=00)  # Запуск каждый день в полночь
+scheduler.start()
+
+@app.on_event("shutdown")
+def shutdown_event():
+    scheduler.shutdown()
+
 
 #---------------------login---------------------
 
@@ -131,14 +175,19 @@ def list_of_rooms(db: Session = Depends(get_db)):
 def sc_list(db: Session = Depends(get_db)):
     settlings = db.query(models.Settling).all()
     ret_list = []
+    
     for settling in settlings:
         ret = {}
         room = db.query(models.Room).filter(models.Room.RoomID == settling.RoomID).first()
         if room is not None:
-            ret['label'] = f'{room.Type} | {room.Size}мкв | {room.Floor}эт + {settling.SettlingDate} - {settling.OutDate}'
+            ret['label'] = f'#{settling.BookingNumber} | {room.Type} | {room.Size}мкв | {room.Floor}эт | {room.RoomID}'
             ret['value'] = settling.BookingNumber
+            ret['RoomID'] = int(room.RoomID)
 
         ret_list.append(ret)
+
+
+    ret_list = sorted(ret_list, key=lambda x: x.get('RoomID'))
 
     return ret_list
 

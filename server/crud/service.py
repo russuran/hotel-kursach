@@ -33,8 +33,8 @@ def create_service(service: schemas.ServiceCreate, db: Session = Depends(get_db)
     return db_service
 
 @router.get("/", response_model=List[schemas.Service])
-def read_services(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    services = db.query(models.Service).offset(skip).limit(limit).all()
+def read_services(db: Session = Depends(get_db)):
+    services = db.query(models.Service).all()
     return services
 
 @router.get("/{service_name}", response_model=schemas.Service)

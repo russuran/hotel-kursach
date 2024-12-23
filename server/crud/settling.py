@@ -36,7 +36,7 @@ def create_settling(settling: schemas.SettlingCreate, db: Session = Depends(get_
 
     if existing_settling is not None:
         return {'error': 'Существующее бронирование пересекается с новыми датами'}
-
+    
 
     data = settling.dict()
     db_settling = models.Settling(**data)
@@ -46,8 +46,8 @@ def create_settling(settling: schemas.SettlingCreate, db: Session = Depends(get_
     return db_settling
 
 @router.get("/", response_model=List[schemas.Settling])
-def read_settlings(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    settlings = db.query(models.Settling).offset(skip).limit(limit).all()
+def read_settlings(db: Session = Depends(get_db)):
+    settlings = db.query(models.Settling).all()
     
         
     return settlings
@@ -83,15 +83,18 @@ def update_settling(BookingNumber: int, settling: schemas.SettlingCreate, db: Se
 
 @router.delete("/{settling_id}", response_model=schemas.Settling)
 def delete_settling(settling_id: int, db: Session = Depends(get_db)):
-    db_settling = db.query(models.Settling).filter(models.Settling.settlingNumber == settling_id).first()
+    db_settling = db.query(models.Settling).filter(models.Settling.BookingNumber == settling_id).first()
     if db_settling is None:
         raise HTTPException(status_code=404, detail="Settling not found")
-    
-    try:
-        db.execute(text("CALL del_settling(:settling_id)"), {"settling_id": settling_id})
-    except Exception as e:
-        pass
 
+    
+    settled_client = db.query(models.SettledClient).filter(models.SettledClient.SettlingID == ).first()
+
+    # try:
+    #     db.execute(text("CALL del_settling(:settling_id)"), {"settling_id": settling_id})
+    # except Exception as e:
+    #     pass
+    
     db.delete(db_settling)
     db.commit()
     return db_settling
